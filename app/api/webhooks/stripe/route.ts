@@ -7,8 +7,33 @@ import { getStripe, stripeConfigured } from "@/lib/stripe";
 // Webhook de Stripe verificado por firma. Gestiona:
 // - Suscripción Vendi Pro (checkout completado, cambios y bajas)
 // - Pagos de pedidos en cuentas Connect (checkout con metadata.orderId)
+//
+// Hay DOS endpoints en el dashboard de Stripe apuntando a esta misma URL:
+// uno de eventos de la cuenta plataforma (STRIPE_WEBHOOK_SECRET) y otro de
+// eventos de cuentas conectadas (STRIPE_CONNECT_WEBHOOK_SECRET). Cada uno
+// firma con su propio secreto, así que se verifica contra ambos.
+function verifyEvent(payload: string, signature: string): Stripe.Event | null {
+  const secrets = [
+    process.env.STRIPE_WEBHOOK_SECRET,
+    process.env.STRIPE_CONNECT_WEBHOOK_SECRET,
+  ].filter((s): s is string => Boolean(s));
+
+  for (const secret of secrets) {
+    try {
+      return getStripe().webhooks.constructEvent(payload, signature, secret);
+    } catch {
+      // probar el siguiente secreto
+    }
+  }
+  return null;
+}
+
 export async function POST(req: Request) {
-  if (!stripeConfigured() || !process.env.STRIPE_WEBHOOK_SECRET) {
+  if (
+    !stripeConfigured() ||
+    (!process.env.STRIPE_WEBHOOK_SECRET &&
+      !process.env.STRIPE_CONNECT_WEBHOOK_SECRET)
+  ) {
     return new Response("Stripe no configurado", { status: 501 });
   }
 
@@ -18,14 +43,8 @@ export async function POST(req: Request) {
   }
 
   const payload = await req.text();
-  let event: Stripe.Event;
-  try {
-    event = getStripe().webhooks.constructEvent(
-      payload,
-      signature,
-      process.env.STRIPE_WEBHOOK_SECRET
-    );
-  } catch {
+  const event = verifyEvent(payload, signature);
+  if (!event) {
     return new Response("Firma inválida", { status: 400 });
   }
 
