@@ -156,7 +156,13 @@
     "shippingLabel": "Precio del envío",
     "saveButton": "Guardar",
     "savedOk": "Guardado",
-    "saveError": "No se pudo guardar"
+    "saveError": "No se pudo guardar",
+    "legalTitle": "Datos legales de la tienda",
+    "legalText": "Con estos datos Vendi genera la página legal de tu tienda (obligatoria para vender en serio).",
+    "legalNameLabel": "Nombre o razón social",
+    "legalTaxIdLabel": "NIF / CIF",
+    "legalAddressLabel": "Dirección",
+    "contactEmailLabel": "Email de contacto"
   },
   "store": {
     "noProducts": "Esta tienda todavía no tiene productos.",
@@ -172,6 +178,7 @@
     "shipping": "Envío",
     "paidSuccess": "¡Pago completado! Gracias por tu compra.",
     "paidCancelled": "Pago cancelado. Puedes intentarlo de nuevo cuando quieras.",
-    "redirecting": "Redirigiendo al pago…"
+    "redirecting": "Redirigiendo al pago…",
+    "legalLink": "Información legal"
   }
 }

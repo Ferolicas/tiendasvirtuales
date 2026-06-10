@@ -156,7 +156,13 @@
     "shippingLabel": "Shipping price",
     "saveButton": "Save",
     "savedOk": "Saved",
-    "saveError": "Couldn't save"
+    "saveError": "Couldn't save",
+    "legalTitle": "Store legal details",
+    "legalText": "Vendi uses these details to generate your store's legal page (required to sell seriously).",
+    "legalNameLabel": "Name or company name",
+    "legalTaxIdLabel": "Tax ID",
+    "legalAddressLabel": "Address",
+    "contactEmailLabel": "Contact email"
   },
   "store": {
     "noProducts": "This store doesn't have products yet.",
@@ -172,6 +178,7 @@
     "shipping": "Shipping",
     "paidSuccess": "Payment completed! Thank you for your purchase.",
     "paidCancelled": "Payment cancelled. You can try again anytime.",
-    "redirecting": "Redirecting to payment…"
+    "redirecting": "Redirecting to payment…",
+    "legalLink": "Legal information"
   }
 }

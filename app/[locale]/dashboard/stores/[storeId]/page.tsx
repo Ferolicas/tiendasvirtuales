@@ -18,6 +18,7 @@ import { AddProductForm } from "@/components/shared/add-product-form";
 import { LiveOrders } from "@/components/shared/live-orders";
 import {
   ConnectButton,
+  LegalForm,
   ShippingForm,
 } from "@/components/shared/store-settings";
 import { formatPrice } from "@/lib/format";
@@ -150,6 +151,26 @@ export default async function StoreAdminPage({
               <ShippingForm
                 storeId={store.id}
                 initialShippingCents={store.shippingCents}
+              />
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-3xl shadow-soft">
+            <CardHeader>
+              <CardTitle className="tracking-tight">
+                {t("legalTitle")}
+              </CardTitle>
+              <CardDescription>{t("legalText")}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <LegalForm
+                storeId={store.id}
+                initial={{
+                  legalName: store.legalName,
+                  legalTaxId: store.legalTaxId,
+                  legalAddress: store.legalAddress,
+                  contactEmail: store.contactEmail,
+                }}
               />
             </CardContent>
           </Card>

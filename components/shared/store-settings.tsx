@@ -71,6 +71,104 @@ export function ShippingForm({
   );
 }
 
+export function LegalForm({
+  storeId,
+  initial,
+}: {
+  storeId: string;
+  initial: {
+    legalName: string | null;
+    legalTaxId: string | null;
+    legalAddress: string | null;
+    contactEmail: string | null;
+  };
+}) {
+  const t = useTranslations("dashboard");
+  const router = useRouter();
+  const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">(
+    "idle"
+  );
+
+  async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setStatus("saving");
+    const form = new FormData(event.currentTarget);
+    const res = await fetch(`/api/stores/${storeId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        legalName: form.get("legalName") || undefined,
+        legalTaxId: form.get("legalTaxId") || undefined,
+        legalAddress: form.get("legalAddress") || undefined,
+        contactEmail: form.get("contactEmail") || undefined,
+      }),
+    });
+    setStatus(res.ok ? "saved" : "error");
+    if (res.ok) router.refresh();
+  }
+
+  return (
+    <form onSubmit={onSubmit} className="grid gap-3">
+      <div className="grid gap-2">
+        <Label htmlFor="legalName">{t("legalNameLabel")}</Label>
+        <Input
+          id="legalName"
+          name="legalName"
+          maxLength={200}
+          defaultValue={initial.legalName ?? ""}
+        />
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="grid gap-2">
+          <Label htmlFor="legalTaxId">{t("legalTaxIdLabel")}</Label>
+          <Input
+            id="legalTaxId"
+            name="legalTaxId"
+            maxLength={50}
+            defaultValue={initial.legalTaxId ?? ""}
+          />
+        </div>
+        <div className="grid gap-2">
+          <Label htmlFor="contactEmail">{t("contactEmailLabel")}</Label>
+          <Input
+            id="contactEmail"
+            name="contactEmail"
+            type="email"
+            defaultValue={initial.contactEmail ?? ""}
+          />
+        </div>
+      </div>
+      <div className="grid gap-2">
+        <Label htmlFor="legalAddress">{t("legalAddressLabel")}</Label>
+        <Input
+          id="legalAddress"
+          name="legalAddress"
+          maxLength={300}
+          defaultValue={initial.legalAddress ?? ""}
+        />
+      </div>
+      <div className="flex items-center gap-3">
+        <Button
+          type="submit"
+          size="sm"
+          disabled={status === "saving"}
+          className="rounded-full"
+        >
+          {t("saveButton")}
+        </Button>
+        {status === "saved" ? (
+          <span className="animate-fade-in text-sm font-medium text-green-600">
+            {t("savedOk")}
+          </span>
+        ) : null}
+        {status === "error" ? (
+          <span className="text-sm text-destructive">{t("saveError")}</span>
+        ) : null}
+      </div>
+    </form>
+  );
+}
+
 export function ConnectButton({
   storeId,
   connected,

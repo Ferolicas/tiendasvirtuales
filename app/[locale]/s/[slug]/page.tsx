@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { and, desc, eq, isNull } from "drizzle-orm";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
+import { Link } from "@/i18n/navigation";
 import { db } from "@/lib/db";
 import { products, stores } from "@/lib/db/schema";
 import {
@@ -126,8 +127,11 @@ export default async function PublicStorePage({
         )}
       </section>
 
-      <footer className="border-t py-6 text-center text-xs text-muted-foreground">
-        {t("madeWith")} · vendi.olcas.app
+      <footer className="grid gap-2 border-t py-6 text-center text-xs text-muted-foreground">
+        <Link href={`/s/${slug}/legal`} className="hover:text-foreground">
+          {t("legalLink")}
+        </Link>
+        <p>{t("madeWith")} · vendi.olcas.app</p>
       </footer>
     </main>
   );

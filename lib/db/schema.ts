@@ -64,6 +64,12 @@ export const stores = pgTable("stores", {
   logoUrl: text("logo_url"),
   currency: text("currency").notNull().default("EUR"),
   shippingCents: integer("shipping_cents").notNull().default(0),
+  // Datos legales del comerciante para la página legal autogenerada de la
+  // tienda (aviso legal + devoluciones).
+  legalName: text("legal_name"),
+  legalTaxId: text("legal_tax_id"),
+  legalAddress: text("legal_address"),
+  contactEmail: text("contact_email"),
   plan: planEnum("plan").notNull().default("free"),
   stripeAccountId: text("stripe_account_id"),
   stripeCustomerId: text("stripe_customer_id"),

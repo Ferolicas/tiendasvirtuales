@@ -234,8 +234,24 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <footer className="py-10 text-center text-xs text-muted-foreground">
-        © {new Date().getFullYear()} Vendi · {tc("byOlcas")}
+      <footer className="grid gap-3 py-10 text-center text-xs text-muted-foreground">
+        <nav className="flex items-center justify-center gap-4">
+          <Link href="/legal" className="hover:text-foreground">
+            {t("footerLegal")}
+          </Link>
+          <Link href="/privacy" className="hover:text-foreground">
+            {t("footerPrivacy")}
+          </Link>
+          <Link href="/cookies" className="hover:text-foreground">
+            {t("footerCookies")}
+          </Link>
+          <Link href="/terms" className="hover:text-foreground">
+            {t("footerTerms")}
+          </Link>
+        </nav>
+        <p>
+          © {new Date().getFullYear()} Vendi · {tc("byOlcas")}
+        </p>
       </footer>
     </main>
   );

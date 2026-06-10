@@ -8,6 +8,10 @@ import { rateLimit, clientIdentifier } from "@/lib/rate-limit";
 const updateStoreSchema = z.object({
   description: z.string().max(500).optional(),
   shippingCents: z.number().int().min(0).max(100_000).optional(),
+  legalName: z.string().max(200).optional(),
+  legalTaxId: z.string().max(50).optional(),
+  legalAddress: z.string().max(300).optional(),
+  contactEmail: z.email().optional(),
 });
 
 export async function PATCH(

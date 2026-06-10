@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Turnstile } from "@/components/shared/turnstile";
 
 export default function RegisterPage() {
   const t = useTranslations("auth");
@@ -30,6 +31,7 @@ export default function RegisterPage() {
       name: form.get("name"),
       email: form.get("email"),
       password: form.get("password"),
+      turnstileToken: form.get("cf-turnstile-response") ?? undefined,
     };
 
     const res = await fetch("/api/register", {
@@ -85,6 +87,7 @@ export default function RegisterPage() {
                 required
               />
             </div>
+            <Turnstile />
             {error ? (
               <p className="text-sm text-destructive">{error}</p>
             ) : null}

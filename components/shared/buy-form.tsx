@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Turnstile } from "@/components/shared/turnstile";
 
 export function BuyForm({
   storeId,
@@ -32,6 +33,7 @@ export function BuyForm({
         customerName: form.get("name"),
         customerEmail: form.get("email"),
         items: [{ productId, quantity: Number(form.get("quantity") ?? 1) }],
+        turnstileToken: form.get("cf-turnstile-response") ?? undefined,
       }),
     });
 
@@ -93,6 +95,7 @@ export function BuyForm({
           defaultValue="1"
         />
       </div>
+      <Turnstile />
       {status === "error" ? (
         <p className="text-sm text-destructive">{t("orderError")}</p>
       ) : null}
