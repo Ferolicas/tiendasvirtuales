@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { io, type Socket } from "socket.io-client";
+import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { formatPrice } from "@/lib/format";
 
@@ -22,6 +23,7 @@ export function LiveOrders({
   currency: string;
   initialOrders: LiveOrder[];
 }) {
+  const t = useTranslations("dashboard");
   const [orders, setOrders] = useState<LiveOrder[]>(initialOrders);
   const [connected, setConnected] = useState(false);
 
@@ -46,33 +48,33 @@ export function LiveOrders({
     <div className="grid gap-3">
       <div className="flex items-center gap-2 text-xs text-muted-foreground">
         <span
-          className={`inline-block h-2 w-2 rounded-full ${
-            connected ? "bg-green-500" : "bg-zinc-300"
+          className={`inline-block size-2 rounded-full ${
+            connected ? "animate-pulse bg-green-500" : "bg-zinc-300"
           }`}
         />
-        {connected ? "Conectado en directo" : "Conectando…"}
+        {connected ? t("liveConnected") : t("liveConnecting")}
       </div>
       {orders.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          Todavía no hay pedidos. Comparte tu tienda para empezar a vender.
-        </p>
+        <p className="text-sm text-muted-foreground">{t("noOrders")}</p>
       ) : (
         orders.map((order) => (
           <div
             key={order.id}
-            className="flex items-center justify-between border-b pb-2 text-sm last:border-0"
+            className="animate-fade-in flex items-center justify-between border-b pb-2 text-sm last:border-0"
           >
             <div>
               <p className="font-medium">{order.customerName}</p>
               <p className="text-xs text-muted-foreground">
-                {new Date(order.createdAt).toLocaleString("es-ES")}
+                {new Date(order.createdAt).toLocaleString()}
               </p>
             </div>
             <div className="flex items-center gap-2">
               <span className="font-semibold">
                 {formatPrice(order.totalCents, currency)}
               </span>
-              <Badge variant="secondary">{order.status}</Badge>
+              <Badge variant="secondary" className="rounded-full">
+                {order.status}
+              </Badge>
             </div>
           </div>
         ))

@@ -1,23 +1,33 @@
 import { NextResponse, type NextRequest } from "next/server";
+import createIntlMiddleware from "next-intl/middleware";
 import { getToken } from "next-auth/jwt";
+import { routing } from "./i18n/routing";
 
-// Next.js 16 renombró middleware.ts a proxy.ts. Protege las rutas del panel:
-// sin sesión válida se redirige a /login conservando la URL de destino.
+const intl = createIntlMiddleware(routing);
+
+// Rutas del panel, con o sin prefijo de idioma.
+const PROTECTED = /^\/(en\/)?dashboard(\/|$)/;
+
 export default async function proxy(req: NextRequest) {
-  const token = await getToken({
-    req,
-    secret: process.env.AUTH_SECRET,
-    secureCookie: process.env.NODE_ENV === "production",
-  });
+  const { pathname } = req.nextUrl;
 
-  if (!token) {
-    const url = new URL("/login", req.url);
-    url.searchParams.set("callbackUrl", req.nextUrl.pathname);
-    return NextResponse.redirect(url);
+  if (PROTECTED.test(pathname)) {
+    const token = await getToken({
+      req,
+      secret: process.env.AUTH_SECRET,
+      secureCookie: process.env.NODE_ENV === "production",
+    });
+    if (!token) {
+      const prefix = pathname.startsWith("/en") ? "/en" : "";
+      const url = new URL(`${prefix}/login`, req.url);
+      url.searchParams.set("callbackUrl", pathname);
+      return NextResponse.redirect(url);
+    }
   }
-  return NextResponse.next();
+
+  return intl(req);
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*"],
+  matcher: ["/((?!api|_next|_vercel|.*\\..*).*)"],
 };

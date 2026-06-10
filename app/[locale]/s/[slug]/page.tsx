@@ -2,6 +2,7 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { and, desc, eq } from "drizzle-orm";
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import { db } from "@/lib/db";
 import { products, stores } from "@/lib/db/schema";
 import {
@@ -25,10 +26,10 @@ export async function generateMetadata({
     .from(stores)
     .where(eq(stores.slug, slug))
     .limit(1);
-  if (!store) return { title: "Tienda no encontrada" };
+  if (!store) return { title: "404" };
   return {
     title: store.name,
-    description: store.description ?? `Tienda online de ${store.name}`,
+    description: store.description ?? `${store.name} · Vendi`,
   };
 }
 
@@ -38,6 +39,8 @@ export default async function PublicStorePage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
+  const t = await getTranslations("store");
+
   const [store] = await db
     .select()
     .from(stores)
@@ -53,26 +56,31 @@ export default async function PublicStorePage({
 
   return (
     <main className="flex-1">
-      <header className="border-b bg-muted/30">
-        <div className="mx-auto max-w-5xl px-6 py-12 text-center">
-          <h1 className="text-3xl font-bold tracking-tight">{store.name}</h1>
+      <header className="border-b bg-secondary/40">
+        <div className="mx-auto max-w-5xl px-5 py-14 text-center sm:px-6">
+          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+            {store.name}
+          </h1>
           {store.description ? (
-            <p className="mt-2 text-muted-foreground">{store.description}</p>
+            <p className="mt-3 text-muted-foreground">{store.description}</p>
           ) : null}
         </div>
       </header>
 
-      <section className="mx-auto max-w-5xl px-6 py-12">
+      <section className="mx-auto max-w-5xl px-5 py-12 sm:px-6">
         {catalog.length === 0 ? (
           <p className="text-center text-sm text-muted-foreground">
-            Esta tienda todavía no tiene productos.
+            {t("noProducts")}
           </p>
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {catalog.map((product) => (
-              <Card key={product.id}>
+              <Card
+                key={product.id}
+                className="hover-lift overflow-hidden rounded-3xl shadow-soft"
+              >
                 {product.imageUrl ? (
-                  <div className="relative aspect-square w-full overflow-hidden rounded-t-xl">
+                  <div className="relative aspect-square w-full overflow-hidden">
                     <Image
                       src={product.imageUrl}
                       alt={product.name}
@@ -83,13 +91,13 @@ export default async function PublicStorePage({
                   </div>
                 ) : null}
                 <CardHeader>
-                  <CardTitle>{product.name}</CardTitle>
-                  <CardDescription>
-                    {product.description ?? ""}
-                  </CardDescription>
+                  <CardTitle className="tracking-tight">
+                    {product.name}
+                  </CardTitle>
+                  <CardDescription>{product.description ?? ""}</CardDescription>
                 </CardHeader>
                 <CardContent className="grid gap-3">
-                  <p className="text-lg font-semibold">
+                  <p className="text-lg font-bold tracking-tight">
                     {formatPrice(product.priceCents, store.currency)}
                   </p>
                   <BuyForm storeId={store.id} productId={product.id} />
@@ -101,7 +109,7 @@ export default async function PublicStorePage({
       </section>
 
       <footer className="border-t py-6 text-center text-xs text-muted-foreground">
-        Tienda creada con Vendi · vendi.olcas.app
+        {t("madeWith")} · vendi.olcas.app
       </footer>
     </main>
   );

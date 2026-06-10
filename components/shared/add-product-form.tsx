@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 export function AddProductForm({ storeId }: { storeId: string }) {
+  const t = useTranslations("dashboard");
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -32,7 +34,7 @@ export function AddProductForm({ storeId }: { storeId: string }) {
 
     setLoading(false);
     if (!res.ok) {
-      setError("No se pudo crear el producto. Revisa los datos.");
+      setError(t("addProductError"));
       return;
     }
     formElement.reset();
@@ -42,16 +44,16 @@ export function AddProductForm({ storeId }: { storeId: string }) {
   return (
     <form onSubmit={onSubmit} className="grid gap-4">
       <div className="grid gap-2">
-        <Label htmlFor="product-name">Nombre</Label>
+        <Label htmlFor="product-name">{t("productName")}</Label>
         <Input id="product-name" name="name" minLength={2} required />
       </div>
       <div className="grid gap-2">
-        <Label htmlFor="product-description">Descripción (opcional)</Label>
+        <Label htmlFor="product-description">{t("productDescription")}</Label>
         <Input id="product-description" name="description" maxLength={1000} />
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div className="grid gap-2">
-          <Label htmlFor="product-price">Precio</Label>
+          <Label htmlFor="product-price">{t("price")}</Label>
           <Input
             id="product-price"
             name="price"
@@ -62,7 +64,7 @@ export function AddProductForm({ storeId }: { storeId: string }) {
           />
         </div>
         <div className="grid gap-2">
-          <Label htmlFor="product-stock">Stock</Label>
+          <Label htmlFor="product-stock">{t("stock")}</Label>
           <Input
             id="product-stock"
             name="stock"
@@ -73,8 +75,8 @@ export function AddProductForm({ storeId }: { storeId: string }) {
         </div>
       </div>
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
-      <Button type="submit" disabled={loading}>
-        {loading ? "Guardando…" : "Añadir producto"}
+      <Button type="submit" disabled={loading} className="rounded-full">
+        {loading ? t("saving") : t("addProductButton")}
       </Button>
     </form>
   );

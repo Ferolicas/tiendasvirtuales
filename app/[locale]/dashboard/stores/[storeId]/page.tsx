@@ -1,9 +1,10 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { and, desc, eq } from "drizzle-orm";
+import { getTranslations } from "next-intl/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { orders, products, stores } from "@/lib/db/schema";
+import { Link } from "@/i18n/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,8 +18,6 @@ import { AddProductForm } from "@/components/shared/add-product-form";
 import { LiveOrders } from "@/components/shared/live-orders";
 import { formatPrice } from "@/lib/format";
 
-export const metadata = { title: "Gestionar tienda" };
-
 export default async function StoreAdminPage({
   params,
 }: {
@@ -26,6 +25,7 @@ export default async function StoreAdminPage({
 }) {
   const session = await auth();
   if (!session?.user) redirect("/login");
+  const t = await getTranslations("dashboard");
 
   const { storeId } = await params;
   const [store] = await db
@@ -53,28 +53,33 @@ export default async function StoreAdminPage({
     <div className="grid gap-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {store.name}
-          </h1>
+          <h1 className="text-2xl font-bold tracking-tight">{store.name}</h1>
           <p className="text-sm text-muted-foreground">
-            tienda pública:{" "}
-            <Link href={`/s/${store.slug}`} className="underline" target="_blank">
+            {t("publicStore")}{" "}
+            <Link
+              href={`/s/${store.slug}`}
+              className="underline"
+              target="_blank"
+            >
               /s/{store.slug}
             </Link>
           </p>
         </div>
-        <Badge variant={store.plan === "pro" ? "default" : "secondary"}>
-          plan {store.plan}
+        <Badge
+          className="rounded-full"
+          variant={store.plan === "pro" ? "default" : "secondary"}
+        >
+          {t("plan")} {store.plan}
         </Badge>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
+        <Card className="rounded-3xl shadow-soft">
           <CardHeader>
-            <CardTitle>Pedidos en tiempo real</CardTitle>
-            <CardDescription>
-              Los pedidos nuevos aparecen aquí al instante.
-            </CardDescription>
+            <CardTitle className="tracking-tight">
+              {t("liveOrdersTitle")}
+            </CardTitle>
+            <CardDescription>{t("liveOrdersSubtitle")}</CardDescription>
           </CardHeader>
           <CardContent>
             <LiveOrders
@@ -92,23 +97,27 @@ export default async function StoreAdminPage({
         </Card>
 
         <div className="grid gap-6">
-          <Card>
+          <Card className="rounded-3xl shadow-soft">
             <CardHeader>
-              <CardTitle>Añadir producto</CardTitle>
+              <CardTitle className="tracking-tight">
+                {t("addProductTitle")}
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <AddProductForm storeId={store.id} />
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="rounded-3xl shadow-soft">
             <CardHeader>
-              <CardTitle>Productos ({productList.length})</CardTitle>
+              <CardTitle className="tracking-tight">
+                {t("products")} ({productList.length})
+              </CardTitle>
             </CardHeader>
             <CardContent className="grid gap-3">
               {productList.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
-                  Aún no hay productos.
+                  {t("noProducts")}
                 </p>
               ) : (
                 productList.map((product) => (
@@ -128,8 +137,8 @@ export default async function StoreAdminPage({
         </div>
       </div>
 
-      <Button variant="outline" className="w-fit" asChild>
-        <Link href="/dashboard">← Volver al panel</Link>
+      <Button variant="outline" className="w-fit rounded-full" asChild>
+        <Link href="/dashboard">← {t("backToPanel")}</Link>
       </Button>
     </div>
   );

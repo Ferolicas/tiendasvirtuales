@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 export function CreateStoreForm() {
+  const t = useTranslations("dashboard");
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -29,7 +31,7 @@ export function CreateStoreForm() {
 
     setLoading(false);
     if (!res.ok) {
-      setError("No se pudo crear la tienda. Revisa los datos.");
+      setError(t("createStoreError"));
       return;
     }
     router.refresh();
@@ -38,27 +40,27 @@ export function CreateStoreForm() {
   return (
     <form onSubmit={onSubmit} className="grid gap-4">
       <div className="grid gap-2">
-        <Label htmlFor="store-name">Nombre</Label>
+        <Label htmlFor="store-name">{t("storeName")}</Label>
         <Input
           id="store-name"
           name="name"
           minLength={2}
           maxLength={80}
-          placeholder="Panadería La Espiga"
+          placeholder={t("storeNamePlaceholder")}
           required
         />
       </div>
       <div className="grid gap-2">
-        <Label htmlFor="store-description">Descripción (opcional)</Label>
+        <Label htmlFor="store-description">{t("storeDescription")}</Label>
         <Input
           id="store-description"
           name="description"
           maxLength={500}
-          placeholder="Pan artesano y repostería"
+          placeholder={t("storeDescriptionPlaceholder")}
         />
       </div>
       <div className="grid gap-2">
-        <Label htmlFor="store-currency">Moneda</Label>
+        <Label htmlFor="store-currency">{t("currency")}</Label>
         <select
           id="store-currency"
           name="currency"
@@ -72,8 +74,8 @@ export function CreateStoreForm() {
         </select>
       </div>
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
-      <Button type="submit" disabled={loading}>
-        {loading ? "Creando…" : "Crear tienda"}
+      <Button type="submit" disabled={loading} className="rounded-full">
+        {loading ? t("creating") : t("createStoreButton")}
       </Button>
     </form>
   );

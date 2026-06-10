@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
+import { useTranslations } from "next-intl";
+import { Link, useRouter } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 export default function RegisterPage() {
+  const t = useTranslations("auth");
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -41,9 +42,7 @@ export default function RegisterPage() {
       setLoading(false);
       const data = await res.json().catch(() => null);
       setError(
-        typeof data?.error === "string"
-          ? data.error
-          : "No se pudo crear la cuenta. Revisa los datos."
+        typeof data?.error === "string" ? data.error : t("registerError")
       );
       return;
     }
@@ -58,26 +57,26 @@ export default function RegisterPage() {
   }
 
   return (
-    <main className="flex flex-1 items-center justify-center px-6 py-24">
-      <Card className="w-full max-w-sm">
+    <main className="flex flex-1 items-center justify-center px-5 py-24">
+      <Card className="w-full max-w-sm rounded-3xl shadow-soft">
         <CardHeader>
-          <CardTitle>Crea tu cuenta</CardTitle>
-          <CardDescription>
-            Empieza gratis y monta tu primera tienda hoy
-          </CardDescription>
+          <CardTitle className="text-2xl tracking-tight">
+            {t("registerTitle")}
+          </CardTitle>
+          <CardDescription>{t("registerSubtitle")}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={onSubmit} className="grid gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="name">Nombre</Label>
+              <Label htmlFor="name">{t("name")}</Label>
               <Input id="name" name="name" minLength={2} required />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t("email")}</Label>
               <Input id="email" name="email" type="email" required />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="password">Contraseña (mínimo 8 caracteres)</Label>
+              <Label htmlFor="password">{t("passwordHint")}</Label>
               <Input
                 id="password"
                 name="password"
@@ -89,13 +88,13 @@ export default function RegisterPage() {
             {error ? (
               <p className="text-sm text-destructive">{error}</p>
             ) : null}
-            <Button type="submit" disabled={loading}>
-              {loading ? "Creando…" : "Crear cuenta"}
+            <Button type="submit" disabled={loading} className="rounded-full">
+              {loading ? t("registerLoading") : t("registerButton")}
             </Button>
             <p className="text-center text-sm text-muted-foreground">
-              ¿Ya tienes cuenta?{" "}
+              {t("haveAccount")}{" "}
               <Link href="/login" className="underline">
-                Entrar
+                {t("loginButton")}
               </Link>
             </p>
           </form>
