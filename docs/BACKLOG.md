@@ -5,31 +5,31 @@
 
 ## P0 — Bloquea el lanzamiento
 
-- [ ] **P0.1 Rebranding a Vendi + dominio**: DNS `vendi.olcas.app`, vhost Caddy
-      (alias + redirect 301 desde `tiendas.olcas.app`), APP_URL/AUTH_URL,
-      textos y metadata.
-- [ ] **P0.2 Design system premium**: tipografía y paleta (minimal-lujo +
-      calidez Airbnb), micro-animaciones, botones/cards pulidos, mobile-first.
-      Rehacer landing con la propuesta de valor de Vendi.
-- [ ] **P0.3 i18n plataforma ES+EN** (next-intl): landing, auth, panel, tienda
-      pública; hreflang.
-- [ ] **P0.4 Auth completa**: verificación de email al registrarse, reset de
-      contraseña (Resend, dominio olcas.app verificado) y borrado de cuenta
-      autoservicio (pedidos anonimizados).
-- [ ] **P0.5 Stripe completo**: suscripción Pro 9,99 €/mes (Checkout + Customer
-      Portal + webhooks), Connect Express onboarding para tiendas, checkout de
-      pedidos con `application_fee` (3 % free / 1 % pro) y Stripe Tax.
-- [ ] **P0.6 Envíos simples**: precio de envío configurable por tienda,
-      sumado al total del pedido.
-- [ ] **P0.7 Límites de plan**: free = 1 tienda y 10 productos; pro =
-      ilimitado. Aplicados en servidor.
-- [ ] **P0.8 Cloudflare Turnstile** en registro y checkout público.
-- [ ] **P0.9 Legal ES/EN**: aviso legal, privacidad, cookies, términos
-      (responsable «Olcas Apps» con placeholders), footer; plantilla legal
-      autogenerada por tienda (datos del dueño en ajustes).
-- [ ] **P0.10 Operación**: backup diario `pg_dump` con rotación 14 días
-      (+ restauración probada), cron de uptime con aviso por email al fundador,
-      SEO completo (sitemap, robots, OG ES/EN).
+- [x] **P0.1 Rebranding a Vendi + dominio**: DNS `vendi.olcas.app`, vhost Caddy
+      (redirect 301 desde `tiendas.olcas.app`), APP_URL/AUTH_URL, textos y
+      metadata. ✅ 2026-06-10
+- [x] **P0.2 Design system premium**: tema cálido minimal-lujo con coral de
+      marca, micro-animaciones, mobile-first, landing nueva. ✅ 2026-06-10
+- [x] **P0.3 i18n plataforma ES+EN** (next-intl): rutas /[locale], selector
+      de idioma, hreflang en metadata. ✅ 2026-06-10
+- [x] **P0.4 Auth completa**: verificación de email, reset de contraseña,
+      borrado de cuenta con anonimización. Emails Resend listos (pendiente
+      API key). ✅ 2026-06-10
+- [x] **P0.5 Stripe completo**: suscripción Pro 9,99 € (Checkout + Portal +
+      webhooks), Connect Express, application_fee 3 %/1 %, Stripe Tax con
+      degradación. Pendiente: claves live + webhook en dashboard de Stripe.
+      ✅ código 2026-06-10
+- [x] **P0.6 Envíos simples**: precio por tienda sumado en servidor.
+      ✅ 2026-06-10
+- [x] **P0.7 Límites de plan** en servidor (free: 1 tienda / 10 productos).
+      ✅ 2026-06-10
+- [x] **P0.8 Cloudflare Turnstile** en registro y checkout (se activa al
+      poner las claves en .env). ✅ código 2026-06-10
+- [x] **P0.9 Legal ES/EN**: 4 páginas + footer + legal autogenerado por
+      tienda. Pendiente: rellenar [NIF] y [DIRECCIÓN FISCAL]. ✅ 2026-06-10
+- [x] **P0.10 Operación**: backup diario 04:00 con rotación 14 días y
+      restauración probada; uptime cada 5 min con email al fundador;
+      sitemap + robots + OG. ✅ 2026-06-10
 
 ## P1 — Primera semana
 

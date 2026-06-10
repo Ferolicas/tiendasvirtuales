@@ -3,6 +3,10 @@ import { isNull } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { stores } from "@/lib/db/schema";
 
+// El sitemap consulta la DB (tiendas activas): debe generarse en cada
+// petición, nunca en build.
+export const dynamic = "force-dynamic";
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = process.env.APP_URL ?? "https://vendi.olcas.app";
 
