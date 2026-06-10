@@ -17,16 +17,17 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.APP_URL ?? "http://localhost:3000"),
   title: {
-    default: "TiendasVirtuales — Crea tu tienda online en minutos",
-    template: "%s | TiendasVirtuales",
+    default: "Vendi — Tu tienda online, lista en minutos",
+    template: "%s | Vendi",
   },
   description:
-    "Plataforma para crear tiendas virtuales para cualquier tipo de negocio: catálogo, pedidos en tiempo real y pagos integrados.",
+    "Vendi by Olcas: crea la tienda online de tu negocio en minutos. Catálogo premium, pedidos en tiempo real y pagos con tarjeta integrados.",
   openGraph: {
-    title: "TiendasVirtuales",
+    title: "Vendi — Tu tienda online, lista en minutos",
     description:
-      "Crea tu tienda online en minutos. Catálogo, pedidos en tiempo real y pagos integrados.",
+      "Crea la tienda online de tu negocio en minutos. Catálogo premium, pedidos en tiempo real y pagos integrados.",
     type: "website",
+    siteName: "Vendi",
   },
 };
 

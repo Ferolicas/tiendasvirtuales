@@ -101,7 +101,7 @@ export default async function PublicStorePage({
       </section>
 
       <footer className="border-t py-6 text-center text-xs text-muted-foreground">
-        Tienda creada con TiendasVirtuales
+        Tienda creada con Vendi · vendi.olcas.app
       </footer>
     </main>
   );

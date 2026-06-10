@@ -21,7 +21,7 @@ pm2 save
 # reintenta el healthcheck hasta 30 s antes de dar el deploy por fallido.
 for i in $(seq 1 15); do
   if curl -fsS "http://127.0.0.1:${PORT}/api/health" >/dev/null 2>&1; then
-    echo "Deploy OK -> https://tiendas.olcas.app"
+    echo "Deploy OK -> https://vendi.olcas.app"
     exit 0
   fi
   sleep 2

@@ -31,7 +31,7 @@ export default function HomePage() {
       <header className="border-b">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
           <span className="text-lg font-semibold tracking-tight">
-            Tiendas<span className="text-primary">Virtuales</span>
+            vendi<span className="text-primary">.</span>
           </span>
           <nav className="flex items-center gap-2">
             <Button variant="ghost" asChild>
@@ -77,7 +77,7 @@ export default function HomePage() {
       </section>
 
       <footer className="border-t py-8 text-center text-sm text-muted-foreground">
-        © {new Date().getFullYear()} TiendasVirtuales · olcas.app
+        © {new Date().getFullYear()} Vendi · by Olcas Apps
       </footer>
     </main>
   );
