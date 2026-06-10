@@ -15,6 +15,13 @@
       "when": 1781091306192,
       "tag": "0001_striped_ghost_rider",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1781091768401,
+      "tag": "0002_legal_golden_guardian",
+      "breakpoints": true
     }
   ]
 }

@@ -3,7 +3,7 @@ import { and, desc, eq, isNull } from "drizzle-orm";
 import { getTranslations } from "next-intl/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { orders, products, stores } from "@/lib/db/schema";
+import { orders, products, stores, users } from "@/lib/db/schema";
 import { Link } from "@/i18n/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,10 @@ import {
 } from "@/components/ui/card";
 import { AddProductForm } from "@/components/shared/add-product-form";
 import { LiveOrders } from "@/components/shared/live-orders";
+import {
+  ConnectButton,
+  ShippingForm,
+} from "@/components/shared/store-settings";
 import { formatPrice } from "@/lib/format";
 
 export default async function StoreAdminPage({
@@ -41,7 +45,7 @@ export default async function StoreAdminPage({
     .limit(1);
   if (!store) notFound();
 
-  const [productList, recentOrders] = await Promise.all([
+  const [productList, recentOrders, [me]] = await Promise.all([
     db
       .select()
       .from(products)
@@ -53,7 +57,13 @@ export default async function StoreAdminPage({
       .where(eq(orders.storeId, store.id))
       .orderBy(desc(orders.createdAt))
       .limit(20),
+    db
+      .select({ plan: users.plan })
+      .from(users)
+      .where(eq(users.id, session.user.id))
+      .limit(1),
   ]);
+  const plan = me?.plan ?? "free";
 
   return (
     <div className="grid gap-8">
@@ -73,9 +83,9 @@ export default async function StoreAdminPage({
         </div>
         <Badge
           className="rounded-full"
-          variant={store.plan === "pro" ? "default" : "secondary"}
+          variant={plan === "pro" ? "default" : "secondary"}
         >
-          {t("plan")} {store.plan}
+          {t("plan")} {plan}
         </Badge>
       </div>
 
@@ -111,6 +121,36 @@ export default async function StoreAdminPage({
             </CardHeader>
             <CardContent>
               <AddProductForm storeId={store.id} />
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-3xl shadow-soft">
+            <CardHeader>
+              <CardTitle className="tracking-tight">
+                {t("paymentsTitle")}
+              </CardTitle>
+              <CardDescription>{t("paymentsText")}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ConnectButton
+                storeId={store.id}
+                connected={Boolean(store.stripeAccountId)}
+              />
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-3xl shadow-soft">
+            <CardHeader>
+              <CardTitle className="tracking-tight">
+                {t("shippingTitle")}
+              </CardTitle>
+              <CardDescription>{t("shippingText")}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ShippingForm
+                storeId={store.id}
+                initialShippingCents={store.shippingCents}
+              />
             </CardContent>
           </Card>
 

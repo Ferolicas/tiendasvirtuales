@@ -31,7 +31,10 @@ export function CreateStoreForm() {
 
     setLoading(false);
     if (!res.ok) {
-      setError(t("createStoreError"));
+      const data = await res.json().catch(() => null);
+      setError(
+        data?.error === "plan_limit" ? t("planLimit") : t("createStoreError")
+      );
       return;
     }
     router.refresh();

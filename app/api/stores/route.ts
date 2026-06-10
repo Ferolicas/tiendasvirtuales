@@ -1,10 +1,11 @@
-import { and, eq, isNull } from "drizzle-orm";
+import { and, count, eq, isNull } from "drizzle-orm";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { stores } from "@/lib/db/schema";
+import { stores, users } from "@/lib/db/schema";
 import { createStoreSchema } from "@/lib/validations/store";
 import { rateLimit, clientIdentifier } from "@/lib/rate-limit";
 import { slugify } from "@/lib/slug";
+import { PLAN_LIMITS } from "@/lib/plan";
 
 export async function GET() {
   const session = await auth();
@@ -33,6 +34,22 @@ export async function POST(req: Request) {
   const result = createStoreSchema.safeParse(body);
   if (!result.success) {
     return Response.json({ error: result.error.flatten() }, { status: 400 });
+  }
+
+  // Límite de plan: free = 1 tienda; pro = ilimitadas.
+  const [owner] = await db
+    .select({ plan: users.plan })
+    .from(users)
+    .where(eq(users.id, session.user.id))
+    .limit(1);
+  const [{ value: storeCount }] = await db
+    .select({ value: count() })
+    .from(stores)
+    .where(
+      and(eq(stores.ownerId, session.user.id), isNull(stores.deletedAt))
+    );
+  if (storeCount >= PLAN_LIMITS[owner?.plan ?? "free"].stores) {
+    return Response.json({ error: "plan_limit" }, { status: 403 });
   }
 
   const base = slugify(result.data.name);

@@ -35,10 +35,13 @@ export async function generateMetadata({
 
 export default async function PublicStorePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ paid?: string }>;
 }) {
   const { slug } = await params;
+  const { paid } = await searchParams;
   const t = await getTranslations("store");
 
   const [store] = await db
@@ -64,10 +67,25 @@ export default async function PublicStorePage({
           {store.description ? (
             <p className="mt-3 text-muted-foreground">{store.description}</p>
           ) : null}
+          {store.shippingCents > 0 ? (
+            <p className="mt-3 text-sm text-muted-foreground">
+              {t("shipping")}: {formatPrice(store.shippingCents, store.currency)}
+            </p>
+          ) : null}
         </div>
       </header>
 
       <section className="mx-auto max-w-5xl px-5 py-12 sm:px-6">
+        {paid === "1" ? (
+          <p className="animate-fade-in mx-auto mb-8 max-w-md rounded-2xl bg-green-50 p-4 text-center text-sm font-medium text-green-700">
+            {t("paidSuccess")}
+          </p>
+        ) : null}
+        {paid === "0" ? (
+          <p className="animate-fade-in mx-auto mb-8 max-w-md rounded-2xl bg-secondary p-4 text-center text-sm text-muted-foreground">
+            {t("paidCancelled")}
+          </p>
+        ) : null}
         {catalog.length === 0 ? (
           <p className="text-center text-sm text-muted-foreground">
             {t("noProducts")}

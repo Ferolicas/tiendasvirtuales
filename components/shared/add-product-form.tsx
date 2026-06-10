@@ -34,7 +34,10 @@ export function AddProductForm({ storeId }: { storeId: string }) {
 
     setLoading(false);
     if (!res.ok) {
-      setError(t("addProductError"));
+      const data = await res.json().catch(() => null);
+      setError(
+        data?.error === "plan_limit" ? t("planLimit") : t("addProductError")
+      );
       return;
     }
     formElement.reset();

@@ -136,7 +136,27 @@
     "dangerText": "Your personal data will be deleted and your stores will be unpublished. Orders are kept anonymized for tax obligations. This action cannot be undone.",
     "deleteAccount": "Delete my account",
     "deleteConfirm": "Are you sure? This action is final.",
-    "deleting": "Deleting…"
+    "deleting": "Deleting…",
+    "billingTitle": "Your plan",
+    "billingFreeText": "You're on the Free plan: 1 store, 10 products and a 3% fee per sale.",
+    "billingProText": "You're Pro: unlimited stores and products with only a 1% fee.",
+    "upgradeButton": "Go Pro — €9.99/month",
+    "manageSubscription": "Manage subscription",
+    "billingSuccess": "Welcome to Vendi Pro! Your account is now upgraded.",
+    "billingCancelled": "Payment cancelled. You're still on the Free plan.",
+    "billingUnavailable": "Payments will be available very soon.",
+    "planLimit": "You've reached your plan's limit. Go Pro to unlock unlimited.",
+    "paymentsTitle": "Card payments",
+    "paymentsText": "Connect Stripe so your customers can pay by card. Vendi only keeps its per-sale fee.",
+    "connectButton": "Enable payments with Stripe",
+    "connectActive": "Card payments active",
+    "connectLoading": "Opening Stripe…",
+    "shippingTitle": "Shipping",
+    "shippingText": "Flat shipping price added to every order. Set 0 if shipping is free.",
+    "shippingLabel": "Shipping price",
+    "saveButton": "Save",
+    "savedOk": "Saved",
+    "saveError": "Couldn't save"
   },
   "store": {
     "noProducts": "This store doesn't have products yet.",
@@ -148,6 +168,10 @@
     "sending": "Sending…",
     "orderDone": "Order sent! The store will get in touch with you.",
     "orderError": "Couldn't send the order. Please try again.",
-    "madeWith": "Store made with Vendi"
+    "madeWith": "Store made with Vendi",
+    "shipping": "Shipping",
+    "paidSuccess": "Payment completed! Thank you for your purchase.",
+    "paidCancelled": "Payment cancelled. You can try again anytime.",
+    "redirecting": "Redirecting to payment…"
   }
 }

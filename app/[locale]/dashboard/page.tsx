@@ -1,9 +1,10 @@
+import { Suspense } from "react";
 import { and, eq, isNull } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { stores } from "@/lib/db/schema";
+import { stores, users } from "@/lib/db/schema";
 import { Link } from "@/i18n/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { CreateStoreForm } from "@/components/shared/create-store-form";
+import { BillingCard } from "@/components/shared/billing-card";
 import { DangerZone } from "@/components/shared/danger-zone";
 
 export async function generateMetadata() {
@@ -27,12 +29,20 @@ export default async function DashboardPage() {
   if (!session?.user) redirect("/login");
   const t = await getTranslations("dashboard");
 
-  const own = await db
-    .select()
-    .from(stores)
-    .where(
-      and(eq(stores.ownerId, session.user.id), isNull(stores.deletedAt))
-    );
+  const [own, [me]] = await Promise.all([
+    db
+      .select()
+      .from(stores)
+      .where(
+        and(eq(stores.ownerId, session.user.id), isNull(stores.deletedAt))
+      ),
+    db
+      .select({ plan: users.plan })
+      .from(users)
+      .where(eq(users.id, session.user.id))
+      .limit(1),
+  ]);
+  const plan = me?.plan ?? "free";
 
   return (
     <div className="grid gap-8">
@@ -50,9 +60,9 @@ export default async function DashboardPage() {
                   <CardTitle className="tracking-tight">{store.name}</CardTitle>
                   <Badge
                     className="rounded-full"
-                    variant={store.plan === "pro" ? "default" : "secondary"}
+                    variant={plan === "pro" ? "default" : "secondary"}
                   >
-                    {store.plan}
+                    {plan}
                   </Badge>
                 </div>
                 <CardDescription>
@@ -92,6 +102,10 @@ export default async function DashboardPage() {
           <CreateStoreForm />
         </CardContent>
       </Card>
+
+      <Suspense>
+        <BillingCard plan={plan} />
+      </Suspense>
 
       <DangerZone />
     </div>

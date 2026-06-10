@@ -27,6 +27,12 @@ export const users = pgTable("users", {
   email: text("email").notNull().unique(),
   passwordHash: text("password_hash").notNull(),
   emailVerified: timestamp("email_verified", { withTimezone: true }),
+  // Suscripción de la plataforma: el plan vive en el usuario (Pro desbloquea
+  // tiendas/productos ilimitados en toda la cuenta).
+  plan: planEnum("plan").notNull().default("free"),
+  stripeCustomerId: text("stripe_customer_id"),
+  stripeSubscriptionId: text("stripe_subscription_id"),
+  subscriptionStatus: text("subscription_status"),
   deletedAt: timestamp("deleted_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
@@ -57,6 +63,7 @@ export const stores = pgTable("stores", {
   description: text("description"),
   logoUrl: text("logo_url"),
   currency: text("currency").notNull().default("EUR"),
+  shippingCents: integer("shipping_cents").notNull().default(0),
   plan: planEnum("plan").notNull().default("free"),
   stripeAccountId: text("stripe_account_id"),
   stripeCustomerId: text("stripe_customer_id"),

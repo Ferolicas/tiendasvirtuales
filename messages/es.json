@@ -136,7 +136,27 @@
     "dangerText": "Se eliminarán tus datos personales y tus tiendas dejarán de estar publicadas. Los pedidos se conservan anonimizados por obligación fiscal. Esta acción no se puede deshacer.",
     "deleteAccount": "Eliminar mi cuenta",
     "deleteConfirm": "¿Seguro? Esta acción es definitiva.",
-    "deleting": "Eliminando…"
+    "deleting": "Eliminando…",
+    "billingTitle": "Tu plan",
+    "billingFreeText": "Estás en el plan Gratis: 1 tienda, 10 productos y 3 % de comisión por venta.",
+    "billingProText": "Eres Pro: tiendas y productos ilimitados con solo 1 % de comisión.",
+    "upgradeButton": "Hazte Pro — 9,99 €/mes",
+    "manageSubscription": "Gestionar suscripción",
+    "billingSuccess": "¡Bienvenido a Vendi Pro! Tu cuenta ya está actualizada.",
+    "billingCancelled": "Pago cancelado. Sigues en el plan Gratis.",
+    "billingUnavailable": "Los pagos estarán disponibles muy pronto.",
+    "planLimit": "Has alcanzado el límite de tu plan. Hazte Pro para desbloquear ilimitado.",
+    "paymentsTitle": "Cobros con tarjeta",
+    "paymentsText": "Conecta Stripe para que tus clientes paguen con tarjeta. Vendi solo retiene su comisión por venta.",
+    "connectButton": "Activar cobros con Stripe",
+    "connectActive": "Cobros con tarjeta activos",
+    "connectLoading": "Abriendo Stripe…",
+    "shippingTitle": "Envío",
+    "shippingText": "Precio fijo de envío que se suma a cada pedido. Pon 0 si no cobras envío.",
+    "shippingLabel": "Precio del envío",
+    "saveButton": "Guardar",
+    "savedOk": "Guardado",
+    "saveError": "No se pudo guardar"
   },
   "store": {
     "noProducts": "Esta tienda todavía no tiene productos.",
@@ -148,6 +168,10 @@
     "sending": "Enviando…",
     "orderDone": "¡Pedido enviado! La tienda se pondrá en contacto contigo.",
     "orderError": "No se pudo enviar el pedido. Inténtalo de nuevo.",
-    "madeWith": "Tienda creada con Vendi"
+    "madeWith": "Tienda creada con Vendi",
+    "shipping": "Envío",
+    "paidSuccess": "¡Pago completado! Gracias por tu compra.",
+    "paidCancelled": "Pago cancelado. Puedes intentarlo de nuevo cuando quieras.",
+    "redirecting": "Redirigiendo al pago…"
   }
 }

@@ -15,9 +15,9 @@ export function BuyForm({
 }) {
   const t = useTranslations("store");
   const [open, setOpen] = useState(false);
-  const [status, setStatus] = useState<"idle" | "sending" | "done" | "error">(
-    "idle"
-  );
+  const [status, setStatus] = useState<
+    "idle" | "sending" | "redirect" | "done" | "error"
+  >("idle");
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -35,13 +35,31 @@ export function BuyForm({
       }),
     });
 
-    setStatus(res.ok ? "done" : "error");
+    if (res.ok) {
+      const data = await res.json();
+      if (data.checkoutUrl) {
+        setStatus("redirect");
+        window.location.href = data.checkoutUrl;
+        return;
+      }
+      setStatus("done");
+      return;
+    }
+    setStatus("error");
   }
 
   if (status === "done") {
     return (
       <p className="animate-fade-in text-sm font-medium text-green-600">
         {t("orderDone")}
+      </p>
+    );
+  }
+
+  if (status === "redirect") {
+    return (
+      <p className="animate-fade-in text-sm text-muted-foreground">
+        {t("redirecting")}
       </p>
     );
   }
