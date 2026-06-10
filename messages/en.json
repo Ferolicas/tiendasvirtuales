@@ -79,7 +79,23 @@
     "createStore": "Create your store",
     "haveAccount": "Already have an account?",
     "invalidCredentials": "Incorrect email or password",
-    "registerError": "Couldn't create the account. Check your details."
+    "registerError": "Couldn't create the account. Check your details.",
+    "forgotLink": "Forgot your password?",
+    "forgotTitle": "Recover password",
+    "forgotSubtitle": "We'll send you a link to create a new one",
+    "forgotButton": "Send link",
+    "forgotLoading": "Sending…",
+    "forgotSent": "If an account exists with that email, you'll receive a link in a few minutes.",
+    "resetTitle": "New password",
+    "resetSubtitle": "Choose a new password for your account",
+    "newPassword": "New password (minimum 8 characters)",
+    "resetButton": "Save password",
+    "resetLoading": "Saving…",
+    "resetSuccess": "Password updated. You can sign in now.",
+    "resetError": "The link is invalid or has expired. Request a new one.",
+    "verifiedOk": "Email verified successfully. You can sign in now.",
+    "verifiedFail": "The verification link is invalid or has expired.",
+    "backToLogin": "Back to sign in"
   },
   "dashboard": {
     "title": "Your stores",
@@ -115,7 +131,12 @@
     "addProductButton": "Add product",
     "saving": "Saving…",
     "addProductError": "Couldn't create the product. Check your details.",
-    "backToPanel": "Back to panel"
+    "backToPanel": "Back to panel",
+    "dangerTitle": "Delete account",
+    "dangerText": "Your personal data will be deleted and your stores will be unpublished. Orders are kept anonymized for tax obligations. This action cannot be undone.",
+    "deleteAccount": "Delete my account",
+    "deleteConfirm": "Are you sure? This action is final.",
+    "deleting": "Deleting…"
   },
   "store": {
     "noProducts": "This store doesn't have products yet.",

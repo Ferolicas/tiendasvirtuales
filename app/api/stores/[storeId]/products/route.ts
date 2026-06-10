@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { products, stores } from "@/lib/db/schema";
@@ -43,7 +43,7 @@ export async function POST(
   const [store] = await db
     .select({ id: stores.id, ownerId: stores.ownerId })
     .from(stores)
-    .where(eq(stores.id, storeId))
+    .where(and(eq(stores.id, storeId), isNull(stores.deletedAt)))
     .limit(1);
   if (!store) {
     return new Response("Not Found", { status: 404 });

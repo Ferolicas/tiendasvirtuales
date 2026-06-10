@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { auth } from "@/auth";
@@ -15,6 +15,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { CreateStoreForm } from "@/components/shared/create-store-form";
+import { DangerZone } from "@/components/shared/danger-zone";
 
 export async function generateMetadata() {
   const t = await getTranslations("dashboard");
@@ -29,7 +30,9 @@ export default async function DashboardPage() {
   const own = await db
     .select()
     .from(stores)
-    .where(eq(stores.ownerId, session.user.id));
+    .where(
+      and(eq(stores.ownerId, session.user.id), isNull(stores.deletedAt))
+    );
 
   return (
     <div className="grid gap-8">
@@ -89,6 +92,8 @@ export default async function DashboardPage() {
           <CreateStoreForm />
         </CardContent>
       </Card>
+
+      <DangerZone />
     </div>
   );
 }

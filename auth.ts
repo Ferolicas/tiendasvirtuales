@@ -24,7 +24,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           .from(users)
           .where(eq(users.email, parsed.data.email))
           .limit(1);
-        if (!user) return null;
+        if (!user || user.deletedAt) return null;
 
         const valid = await bcrypt.compare(
           parsed.data.password,

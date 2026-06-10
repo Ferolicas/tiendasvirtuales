@@ -4,6 +4,8 @@ import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { registerSchema } from "@/lib/validations/auth";
 import { rateLimit, clientIdentifier } from "@/lib/rate-limit";
+import { createAuthToken } from "@/lib/tokens";
+import { sendVerificationEmail } from "@/lib/email";
 
 export async function POST(req: Request) {
   if (!rateLimit(`register:${clientIdentifier(req)}`, 5, 60_000)) {
@@ -35,6 +37,10 @@ export async function POST(req: Request) {
     .insert(users)
     .values({ name, email, passwordHash })
     .returning({ id: users.id, email: users.email, name: users.name });
+
+  const token = await createAuthToken(user.id, "email_verify", 24 * 3600_000);
+  const verifyUrl = `${process.env.APP_URL}/api/verify-email?token=${token}`;
+  await sendVerificationEmail(user.email, verifyUrl);
 
   return Response.json({ user }, { status: 201 });
 }

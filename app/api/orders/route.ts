@@ -1,4 +1,4 @@
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, isNull } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { orders, orderItems, products, stores } from "@/lib/db/schema";
 import { createOrderSchema } from "@/lib/validations/order";
@@ -24,7 +24,7 @@ export async function POST(req: Request) {
   const [store] = await db
     .select({ id: stores.id })
     .from(stores)
-    .where(eq(stores.id, storeId))
+    .where(and(eq(stores.id, storeId), isNull(stores.deletedAt)))
     .limit(1);
   if (!store) {
     return Response.json({ error: "Tienda no encontrada" }, { status: 404 });

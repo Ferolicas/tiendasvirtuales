@@ -16,11 +16,32 @@ export const orderStatusEnum = pgEnum("order_status", [
   "cancelled",
 ]);
 
+export const tokenTypeEnum = pgEnum("token_type", [
+  "email_verify",
+  "password_reset",
+]);
+
 export const users = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
   passwordHash: text("password_hash").notNull(),
+  emailVerified: timestamp("email_verified", { withTimezone: true }),
+  deletedAt: timestamp("deleted_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export const authTokens = pgTable("auth_tokens", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  // Hash SHA-256 del token; el token en claro solo viaja en el email.
+  tokenHash: text("token_hash").notNull().unique(),
+  type: tokenTypeEnum("type").notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
@@ -41,6 +62,7 @@ export const stores = pgTable("stores", {
   stripeCustomerId: text("stripe_customer_id"),
   stripeSubscriptionId: text("stripe_subscription_id"),
   subscriptionStatus: text("subscription_status"),
+  deletedAt: timestamp("deleted_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

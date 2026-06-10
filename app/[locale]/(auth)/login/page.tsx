@@ -21,6 +21,7 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") ?? "/dashboard";
+  const verified = searchParams.get("verified");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -52,6 +53,16 @@ function LoginForm() {
         <CardDescription>{t("loginSubtitle")}</CardDescription>
       </CardHeader>
       <CardContent>
+        {verified === "1" ? (
+          <p className="animate-fade-in mb-4 rounded-2xl bg-green-50 p-3 text-sm font-medium text-green-700">
+            {t("verifiedOk")}
+          </p>
+        ) : null}
+        {verified === "0" ? (
+          <p className="animate-fade-in mb-4 rounded-2xl bg-destructive/10 p-3 text-sm font-medium text-destructive">
+            {t("verifiedFail")}
+          </p>
+        ) : null}
         <form onSubmit={onSubmit} className="grid gap-4">
           <div className="grid gap-2">
             <Label htmlFor="email">{t("email")}</Label>
@@ -71,6 +82,14 @@ function LoginForm() {
           <Button type="submit" disabled={loading} className="rounded-full">
             {loading ? t("loginLoading") : t("loginButton")}
           </Button>
+          <p className="text-center text-sm">
+            <Link
+              href="/forgot-password"
+              className="text-muted-foreground underline"
+            >
+              {t("forgotLink")}
+            </Link>
+          </p>
           <p className="text-center text-sm text-muted-foreground">
             {t("noAccount")}{" "}
             <Link href="/register" className="underline">

@@ -1,5 +1,5 @@
 import { notFound, redirect } from "next/navigation";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, isNull } from "drizzle-orm";
 import { getTranslations } from "next-intl/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
@@ -31,7 +31,13 @@ export default async function StoreAdminPage({
   const [store] = await db
     .select()
     .from(stores)
-    .where(and(eq(stores.id, storeId), eq(stores.ownerId, session.user.id)))
+    .where(
+      and(
+        eq(stores.id, storeId),
+        eq(stores.ownerId, session.user.id),
+        isNull(stores.deletedAt)
+      )
+    )
     .limit(1);
   if (!store) notFound();
 

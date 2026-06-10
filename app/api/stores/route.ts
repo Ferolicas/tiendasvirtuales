@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { stores } from "@/lib/db/schema";
@@ -14,7 +14,9 @@ export async function GET() {
   const own = await db
     .select()
     .from(stores)
-    .where(eq(stores.ownerId, session.user.id));
+    .where(
+      and(eq(stores.ownerId, session.user.id), isNull(stores.deletedAt))
+    );
   return Response.json({ stores: own });
 }
 

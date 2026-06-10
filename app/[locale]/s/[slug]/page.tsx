@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, isNull } from "drizzle-orm";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { db } from "@/lib/db";
@@ -24,7 +24,7 @@ export async function generateMetadata({
   const [store] = await db
     .select({ name: stores.name, description: stores.description })
     .from(stores)
-    .where(eq(stores.slug, slug))
+    .where(and(eq(stores.slug, slug), isNull(stores.deletedAt)))
     .limit(1);
   if (!store) return { title: "404" };
   return {
@@ -44,7 +44,7 @@ export default async function PublicStorePage({
   const [store] = await db
     .select()
     .from(stores)
-    .where(eq(stores.slug, slug))
+    .where(and(eq(stores.slug, slug), isNull(stores.deletedAt)))
     .limit(1);
   if (!store) notFound();
 

@@ -79,7 +79,23 @@
     "createStore": "Crea tu tienda",
     "haveAccount": "¿Ya tienes cuenta?",
     "invalidCredentials": "Email o contraseña incorrectos",
-    "registerError": "No se pudo crear la cuenta. Revisa los datos."
+    "registerError": "No se pudo crear la cuenta. Revisa los datos.",
+    "forgotLink": "¿Olvidaste tu contraseña?",
+    "forgotTitle": "Recuperar contraseña",
+    "forgotSubtitle": "Te enviaremos un enlace para crear una nueva",
+    "forgotButton": "Enviar enlace",
+    "forgotLoading": "Enviando…",
+    "forgotSent": "Si existe una cuenta con ese email, recibirás un enlace en unos minutos.",
+    "resetTitle": "Nueva contraseña",
+    "resetSubtitle": "Elige una contraseña nueva para tu cuenta",
+    "newPassword": "Nueva contraseña (mínimo 8 caracteres)",
+    "resetButton": "Guardar contraseña",
+    "resetLoading": "Guardando…",
+    "resetSuccess": "Contraseña actualizada. Ya puedes entrar.",
+    "resetError": "El enlace no es válido o ha caducado. Pide uno nuevo.",
+    "verifiedOk": "Email verificado correctamente. Ya puedes entrar.",
+    "verifiedFail": "El enlace de verificación no es válido o ha caducado.",
+    "backToLogin": "Volver a entrar"
   },
   "dashboard": {
     "title": "Tus tiendas",
@@ -115,7 +131,12 @@
     "addProductButton": "Añadir producto",
     "saving": "Guardando…",
     "addProductError": "No se pudo crear el producto. Revisa los datos.",
-    "backToPanel": "Volver al panel"
+    "backToPanel": "Volver al panel",
+    "dangerTitle": "Eliminar cuenta",
+    "dangerText": "Se eliminarán tus datos personales y tus tiendas dejarán de estar publicadas. Los pedidos se conservan anonimizados por obligación fiscal. Esta acción no se puede deshacer.",
+    "deleteAccount": "Eliminar mi cuenta",
+    "deleteConfirm": "¿Seguro? Esta acción es definitiva.",
+    "deleting": "Eliminando…"
   },
   "store": {
     "noProducts": "Esta tienda todavía no tiene productos.",
