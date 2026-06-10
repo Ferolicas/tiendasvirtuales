@@ -55,8 +55,9 @@
 
 ## Bloque 4 — Datos y legal (España/UE)
 
-- **Responsable del tratamiento**: «Olcas Apps» con placeholders [NIF] y
-  [dirección fiscal] que el fundador rellenará antes del lanzamiento comercial.
+- **Responsable del tratamiento**: «Olcas Apps», NIF 60739837B, Avenida
+  Torreón del Alcázar 11, 13001 Ciudad Real, España (datos reales integrados
+  el 2026-06-11).
 - **Datos tratados**: dueños (nombre, email, hash de contraseña), compradores
   (nombre, email por pedido), pagos (Stripe, encargado), emails (Resend,
   encargado), CRM (HubSpot, encargado). Imágenes en Cloudflare R2.

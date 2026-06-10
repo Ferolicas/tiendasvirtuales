@@ -11,7 +11,7 @@ export default async function PrivacyPage() {
       <LegalShell title="Privacy policy" updated="Last updated: June 2026">
         <h2>Data controller</h2>
         <p>
-          Olcas Apps, tax ID [NIF], [DIRECCIÓN FISCAL], Spain —
+          Olcas Apps, tax ID 60739837B, Avenida Torreón del Alcázar 11, 13001 Ciudad Real, Spain —
           vendi@olcas.app.
         </p>
         <h2>What data we process</h2>
@@ -63,7 +63,7 @@ export default async function PrivacyPage() {
     >
       <h2>Responsable del tratamiento</h2>
       <p>
-        Olcas Apps, NIF [NIF], [DIRECCIÓN FISCAL], España — vendi@olcas.app.
+        Olcas Apps, NIF 60739837B, Avenida Torreón del Alcázar 11, 13001 Ciudad Real, España — vendi@olcas.app.
       </p>
       <h2>Qué datos tratamos</h2>
       <ul>

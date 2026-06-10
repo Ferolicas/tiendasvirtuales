@@ -12,7 +12,7 @@ export default async function LegalNoticePage() {
         <h2>Site owner</h2>
         <p>
           Vendi (vendi.olcas.app) is a service operated by Olcas Apps
-          ("Olcas"), tax ID [NIF], registered address [DIRECCIÓN FISCAL],
+          ("Olcas"), tax ID 60739837B, registered address Avenida Torreón del Alcázar 11, 13001 Ciudad Real,
           Spain. Contact: vendi@olcas.app.
         </p>
         <h2>Purpose</h2>
@@ -51,7 +51,7 @@ export default async function LegalNoticePage() {
       <h2>Titular del sitio</h2>
       <p>
         Vendi (vendi.olcas.app) es un servicio operado por Olcas Apps
-        ("Olcas"), NIF [NIF], con domicilio en [DIRECCIÓN FISCAL], España.
+        ("Olcas"), NIF 60739837B, con domicilio en Avenida Torreón del Alcázar 11, 13001 Ciudad Real, España.
         Contacto: vendi@olcas.app.
       </p>
       <h2>Objeto</h2>

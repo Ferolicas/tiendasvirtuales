@@ -26,7 +26,7 @@
 - [x] **P0.8 Cloudflare Turnstile** en registro y checkout (se activa al
       poner las claves en .env). ✅ código 2026-06-10
 - [x] **P0.9 Legal ES/EN**: 4 páginas + footer + legal autogenerado por
-      tienda. Pendiente: rellenar [NIF] y [DIRECCIÓN FISCAL]. ✅ 2026-06-10
+      tienda, con NIF y dirección fiscal reales. ✅ 2026-06-11
 - [x] **P0.10 Operación**: backup diario 04:00 con rotación 14 días y
       restauración probada; uptime cada 5 min con email al fundador;
       sitemap + robots + OG. ✅ 2026-06-10
