@@ -5,8 +5,14 @@ import { stores } from "@/lib/db/schema";
 import { getStripe, stripeConfigured } from "@/lib/stripe";
 import { rateLimit, clientIdentifier } from "@/lib/rate-limit";
 
-// Onboarding de Stripe Connect Express: la tienda conecta su cuenta para
-// recibir los cobros de sus ventas (Vendi retiene la comisión por venta).
+// Onboarding de Stripe Connect: la tienda conecta su cuenta para recibir
+// los cobros de sus ventas (Vendi retiene la comisión por venta).
+//
+// Configuración recomendada de plataforma elegida en el dashboard:
+// direct charges, onboarding alojado por Stripe, el vendedor usa el
+// Dashboard completo y paga las comisiones de Stripe, y Stripe gestiona el
+// riesgo y asume las pérdidas. Expresado con `controller` (equivalente
+// moderno de las cuentas Standard).
 export async function POST(
   req: Request,
   { params }: { params: Promise<{ storeId: string }> }
@@ -38,7 +44,11 @@ export async function POST(
   let accountId = store.stripeAccountId;
   if (!accountId) {
     const account = await stripe.accounts.create({
-      type: "express",
+      controller: {
+        fees: { payer: "account" },
+        losses: { payments: "stripe" },
+        stripe_dashboard: { type: "full" },
+      },
       metadata: { storeId: store.id },
     });
     accountId = account.id;
