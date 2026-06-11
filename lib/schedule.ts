@@ -1,3 +1,73 @@
+// Horario ESTRUCTURADO de las tiendas (selector de días + apertura/cierre)
+// más una heurística de respaldo para los horarios antiguos en texto libre.
+
+// days: "all" | "weekdays" (L-V) | "weekend" (S-D) | "0".."6" (0 = lunes)
+export interface StoreHoursRow {
+  days: string;
+  open: string; // "HH:MM"
+  close: string; // "HH:MM"
+}
+
+export const DAY_SPECS = ["all", "weekdays", "weekend"] as const;
+
+const SHORT_DAY_ES = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
+
+function daysOfSpec(spec: string): number[] {
+  if (spec === "all") return [0, 1, 2, 3, 4, 5, 6];
+  if (spec === "weekdays") return [0, 1, 2, 3, 4];
+  if (spec === "weekend") return [5, 6];
+  const n = Number(spec);
+  return Number.isInteger(n) && n >= 0 && n <= 6 ? [n] : [];
+}
+
+function toMinutes(time: string): number | null {
+  const m = /^(\d{1,2}):(\d{2})$/.exec(time);
+  if (!m) return null;
+  const h = Number(m[1]);
+  const min = Number(m[2]);
+  if (h > 23 || min > 59) return null;
+  return h * 60 + min;
+}
+
+export function isOpenFromHours(
+  hours: StoreHoursRow[],
+  now: Date = new Date()
+): boolean | null {
+  if (hours.length === 0) return null;
+  const today = (now.getDay() + 6) % 7; // 0 = lunes
+  const minutes = now.getHours() * 60 + now.getMinutes();
+  let any = false;
+  for (const row of hours) {
+    const start = toMinutes(row.open);
+    const end = toMinutes(row.close);
+    if (start === null || end === null) continue;
+    any = true;
+    if (!daysOfSpec(row.days).includes(today)) continue;
+    if (start === end) return true; // 24 horas
+    const open =
+      end < start
+        ? minutes >= start || minutes < end // cruza medianoche
+        : minutes >= start && minutes < end;
+    if (open) return true;
+  }
+  return any ? false : null;
+}
+
+// Texto compacto en español para cabeceras y tarjetas: "L-V 9:00–20:00 ·
+// Sáb 10:00–14:00". Se guarda también en stores.schedule.
+export function formatHours(hours: StoreHoursRow[]): string {
+  const label = (spec: string) => {
+    if (spec === "all") return "Todos los días";
+    if (spec === "weekdays") return "L-V";
+    if (spec === "weekend") return "S-D";
+    return SHORT_DAY_ES[Number(spec)] ?? spec;
+  };
+  return hours
+    .filter((r) => toMinutes(r.open) !== null && toMinutes(r.close) !== null)
+    .map((r) => `${label(r.days)} ${r.open}–${r.close}`)
+    .join(" · ");
+}
+
 // Heurística para interpretar el horario en texto libre de las tiendas
 // ("L-V 9:00-20:00", "Lun a Vie 9:00-14:00 y 17:00-20:00; Sáb 10:00-14:00")
 // y saber si está abierta ahora. Devuelve null si el texto no es parseable:

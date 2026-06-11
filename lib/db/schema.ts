@@ -6,8 +6,10 @@ import {
   integer,
   boolean,
   doublePrecision,
+  jsonb,
   timestamp,
 } from "drizzle-orm/pg-core";
+import type { StoreHoursRow } from "@/lib/schedule";
 
 export const planEnum = pgEnum("plan", ["free", "pro"]);
 // Ciclo de vida v2: pending (sin pagar) → paid (entrante) → preparing →
@@ -95,8 +97,13 @@ export const stores = pgTable("stores", {
   // Ubicación para el marketplace: ciudad (filtro) y coordenadas
   // opcionales (orden por cercanía).
   city: text("city"),
+  // País ISO 3166-1 alfa-2: avisos de festivos en Explorar.
+  country: text("country"),
   latitude: doublePrecision("latitude"),
   longitude: doublePrecision("longitude"),
+  // Horario estructurado [{days, open, close}]; `schedule` guarda el texto
+  // generado para mostrar (y como legado de tiendas antiguas).
+  hours: jsonb("hours").$type<StoreHoursRow[] | null>(),
   pickupEnabled: boolean("pickup_enabled").notNull().default(false),
   // Media de reseñas desnormalizada para la cabecera
   ratingSum: integer("rating_sum").notNull().default(0),

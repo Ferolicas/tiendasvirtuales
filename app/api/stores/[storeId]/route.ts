@@ -8,6 +8,7 @@ import { stores } from "@/lib/db/schema";
 import { rateLimit, clientIdentifier } from "@/lib/rate-limit";
 import { UPLOAD_DIR } from "@/lib/storage";
 import { imageUrlSchema } from "@/lib/validations/product";
+import { storeHoursSchema } from "@/lib/validations/store";
 import { STORE_CATEGORIES } from "@/lib/verticals";
 
 const BANNER_PRESETS = [
@@ -28,9 +29,11 @@ const updateStoreSchema = z.object({
   bannerUrl: imageUrlSchema.nullable().optional(),
   bannerPreset: z.enum(BANNER_PRESETS).nullable().optional(),
   schedule: z.string().max(500).nullable().optional(),
+  hours: storeHoursSchema.nullable().optional(),
   phone: z.string().max(30).nullable().optional(),
   address: z.string().max(300).nullable().optional(),
   city: z.string().max(80).nullable().optional(),
+  country: z.string().length(2).toUpperCase().nullable().optional(),
   latitude: z.number().min(-90).max(90).nullable().optional(),
   longitude: z.number().min(-180).max(180).nullable().optional(),
   pickupEnabled: z.boolean().optional(),

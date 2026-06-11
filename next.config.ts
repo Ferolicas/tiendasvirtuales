@@ -10,7 +10,9 @@ const securityHeaders = [
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   {
     key: "Permissions-Policy",
-    value: "camera=(), microphone=(), geolocation=()",
+    // geolocation=(self): la usan «Cerca de mí» en Explorar y el botón
+    // «Usar mi ubicación» del modal de tienda.
+    value: "camera=(), microphone=(), geolocation=(self)",
   },
   {
     key: "Content-Security-Policy",

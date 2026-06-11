@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import Image from "next/image";
 import {
   Bike,
+  CalendarDays,
   Clock,
   LocateFixed,
   Loader2,
@@ -25,7 +26,12 @@ import {
   type PublicReview,
 } from "@/components/store/reviews-dialog";
 import { STORE_CATEGORIES } from "@/lib/verticals";
-import { distanceKm, isOpenNow } from "@/lib/schedule";
+import {
+  distanceKm,
+  isOpenFromHours,
+  isOpenNow,
+  type StoreHoursRow,
+} from "@/lib/schedule";
 import { formatPrice } from "@/lib/format";
 
 export interface ExploreStore {
@@ -36,6 +42,8 @@ export interface ExploreStore {
   bannerUrl: string | null;
   storeCategory: string | null;
   schedule: string | null;
+  hours: StoreHoursRow[] | null;
+  holidayName: string | null;
   phone: string | null;
   address: string | null;
   city: string | null;
@@ -98,7 +106,10 @@ export function ExploreGrid({ stores }: { stores: ExploreStore[] }) {
     const q = query.trim().toLowerCase();
     const enriched = stores.map((store) => ({
       store,
-      open: isOpenNow(store.schedule),
+      // Horario estructurado si existe; texto libre como respaldo legado.
+      open: store.hours?.length
+        ? isOpenFromHours(store.hours)
+        : isOpenNow(store.schedule),
       km:
         coords && store.latitude !== null && store.longitude !== null
           ? distanceKm(coords.lat, coords.lng, store.latitude, store.longitude)
@@ -292,6 +303,13 @@ export function ExploreGrid({ stores }: { stores: ExploreStore[] }) {
                 {store.description ? (
                   <p className="mt-1.5 line-clamp-2 text-sm font-light leading-relaxed text-muted-foreground">
                     {store.description}
+                  </p>
+                ) : null}
+
+                {store.holidayName ? (
+                  <p className="mt-2 flex items-start gap-1.5 rounded-xl bg-amber-500/10 px-2.5 py-1.5 text-xs font-medium text-amber-700 dark:text-amber-400">
+                    <CalendarDays className="mt-0.5 size-3.5 shrink-0" />
+                    {t("holidayNotice", { name: store.holidayName })}
                   </p>
                 ) : null}
 

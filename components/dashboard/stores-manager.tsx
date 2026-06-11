@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   CreditCard,
@@ -12,7 +12,7 @@ import {
   Trash2,
   UserCheck,
 } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -39,6 +39,62 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { VendiLiveDot } from "@/components/shared/vendi-dot";
 import { Link } from "@/i18n/navigation";
 import type { AccountProfile } from "@/components/dashboard/account-panel";
+import { formatHours, type StoreHoursRow } from "@/lib/schedule";
+
+// Países para el aviso de festivos de Explorar (ISO 3166-1 alfa-2; los
+// nombres salen de Intl.DisplayNames en el idioma del usuario).
+const COUNTRY_CODES = [
+  "ES", "MX", "CO", "AR", "CL", "PE", "EC", "UY", "PY", "BO", "VE",
+  "CR", "PA", "DO", "GT", "HN", "SV", "NI", "US", "CA", "BR", "PT",
+  "FR", "DE", "IT", "GB", "NL", "BE", "IE", "CH", "AT",
+];
+
+// Horas en pasos de 15 min ("00:00".."23:45") + opción de hora libre.
+const TIME_OPTIONS = Array.from({ length: 96 }, (_, i) => {
+  const h = String(Math.floor(i / 4)).padStart(2, "0");
+  const m = String((i % 4) * 15).padStart(2, "0");
+  return `${h}:${m}`;
+});
+
+function TimeField({
+  value,
+  onChange,
+  label,
+  customLabel,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  label: string;
+  customLabel: string;
+}) {
+  const isCustom = !TIME_OPTIONS.includes(value);
+  if (isCustom) {
+    return (
+      <input
+        type="time"
+        value={value}
+        aria-label={label}
+        onChange={(e) => onChange(e.target.value)}
+        className="border-input h-9 rounded-md border bg-transparent px-2 text-sm"
+      />
+    );
+  }
+  return (
+    <select
+      value={value}
+      aria-label={label}
+      onChange={(e) => onChange(e.target.value === "custom" ? "" : e.target.value)}
+      className="border-input h-9 rounded-md border bg-transparent px-2 text-sm"
+    >
+      {TIME_OPTIONS.map((time) => (
+        <option key={time} value={time}>
+          {time}
+        </option>
+      ))}
+      <option value="custom">{customLabel}</option>
+    </select>
+  );
+}
 import {
   CATEGORY_BANNER,
   STORE_CATEGORIES,
@@ -65,9 +121,11 @@ export interface ManagedStore {
   bannerUrl: string | null;
   bannerPreset: string | null;
   schedule: string | null;
+  hours: StoreHoursRow[] | null;
   phone: string | null;
   address: string | null;
   city: string | null;
+  country: string | null;
   latitude: number | null;
   longitude: number | null;
   pickupEnabled: boolean;
@@ -124,6 +182,26 @@ export function StoresManager({
   // de ubicación, nunca se escriben a mano).
   const [geo, setGeo] = useState<{ lat: number; lng: number } | null>(null);
   const [locating, setLocating] = useState(false);
+  const [hoursRows, setHoursRows] = useState<StoreHoursRow[]>([]);
+  const [country, setCountry] = useState("");
+  const locale = useLocale();
+  const countryOptions = useMemo(() => {
+    const names = new Intl.DisplayNames([locale], { type: "region" });
+    return COUNTRY_CODES.map((code) => ({
+      code,
+      name: names.of(code) ?? code,
+    })).sort((a, b) => a.name.localeCompare(b.name));
+  }, [locale]);
+
+  function updateHourRow(
+    index: number,
+    field: keyof StoreHoursRow,
+    value: string
+  ) {
+    setHoursRows((rows) =>
+      rows.map((row, i) => (i === index ? { ...row, [field]: value } : row))
+    );
+  }
 
   function openModal(store: ManagedStore | "new") {
     setEditing(store);
@@ -138,6 +216,8 @@ export function StoresManager({
         ? { lat: store.latitude, lng: store.longitude }
         : null
     );
+    setHoursRows(store === "new" ? [] : (store.hours ?? []));
+    setCountry(store === "new" ? "" : (store.country ?? ""));
   }
 
   function captureLocation() {
@@ -185,6 +265,10 @@ export function StoresManager({
     const form = new FormData(event.currentTarget);
     const isNew = editing === "new";
 
+    const cleanHours = hoursRows.filter(
+      (r) => /^\d{2}:\d{2}$/.test(r.open) && /^\d{2}:\d{2}$/.test(r.close)
+    );
+
     // Sin banner elegido: se sugiere el predefinido de la categoría.
     const effectivePreset =
       !customBanner && !preset
@@ -195,10 +279,12 @@ export function StoresManager({
       name: String(form.get("name") ?? ""),
       storeCategory: category,
       description: String(form.get("description") ?? "") || undefined,
-      schedule: String(form.get("schedule") ?? "") || undefined,
+      hours: cleanHours,
+      schedule: formatHours(cleanHours) || undefined,
       phone: String(form.get("phone") ?? "") || undefined,
       address: String(form.get("address") ?? "") || undefined,
       city: String(form.get("city") ?? "") || undefined,
+      country: country || undefined,
       latitude: geo?.lat ?? null,
       longitude: geo?.lng ?? null,
       pickupEnabled: pickup,
@@ -530,16 +616,73 @@ export function StoresManager({
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="st-schedule">{t("scheduleLabel2")}</Label>
-                <textarea
-                  id="st-schedule"
-                  name="schedule"
-                  rows={2}
-                  maxLength={500}
-                  defaultValue={current?.schedule ?? ""}
-                  placeholder={t("schedulePlaceholder")}
-                  className="border-input rounded-md border bg-transparent px-3 py-2 text-sm"
-                />
+                <Label>{t("scheduleLabel2")}</Label>
+                {hoursRows.map((row, i) => (
+                  <div
+                    key={i}
+                    className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-2"
+                  >
+                    <select
+                      value={row.days}
+                      onChange={(e) => updateHourRow(i, "days", e.target.value)}
+                      aria-label={t("hoursDays")}
+                      className="border-input h-9 min-w-0 rounded-md border bg-transparent px-2 text-sm"
+                    >
+                      <option value="all">{t("daysAll")}</option>
+                      <option value="weekdays">L-V</option>
+                      <option value="weekend">S-D</option>
+                      {[0, 1, 2, 3, 4, 5, 6].map((d) => (
+                        <option key={d} value={String(d)}>
+                          {t(`day_${d}`)}
+                        </option>
+                      ))}
+                    </select>
+                    <TimeField
+                      value={row.open}
+                      onChange={(v) => updateHourRow(i, "open", v)}
+                      label={t("hoursOpen")}
+                      customLabel={t("hoursCustom")}
+                    />
+                    <TimeField
+                      value={row.close}
+                      onChange={(v) => updateHourRow(i, "close", v)}
+                      label={t("hoursClose")}
+                      customLabel={t("hoursCustom")}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      aria-label={t("hoursRemove")}
+                      className="size-8 rounded-full text-muted-foreground"
+                      onClick={() =>
+                        setHoursRows((rows) => rows.filter((_, j) => j !== i))
+                      }
+                    >
+                      <Trash2 className="size-3.5" />
+                    </Button>
+                  </div>
+                ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="w-fit rounded-full"
+                  onClick={() =>
+                    setHoursRows((rows) => [
+                      ...rows,
+                      { days: "all", open: "09:00", close: "20:00" },
+                    ])
+                  }
+                >
+                  <Plus className="size-3.5" />
+                  {t("hoursAdd")}
+                </Button>
+                {hoursRows.length === 0 && current?.schedule ? (
+                  <p className="text-xs font-light text-muted-foreground">
+                    {t("hoursLegacy", { schedule: current.schedule })}
+                  </p>
+                ) : null}
               </div>
 
               <label className="flex items-center justify-between rounded-2xl bg-secondary/60 px-4 py-3 text-sm">
@@ -595,7 +738,7 @@ export function StoresManager({
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 items-end gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="st-city">{t("cityLabel")}</Label>
                   <Input
@@ -605,24 +748,40 @@ export function StoresManager({
                     placeholder={t("cityPlaceholder")}
                   />
                 </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  disabled={locating}
-                  onClick={captureLocation}
-                  className="rounded-full"
-                >
-                  {locating ? (
-                    <Loader2 className="size-3.5 animate-spin" />
-                  ) : (
-                    <MapPin
-                      className={`size-3.5 ${geo ? "text-green-600" : ""}`}
-                    />
-                  )}
-                  {geo ? t("locationSaved") : t("useMyLocation")}
-                </Button>
+                <div className="grid gap-2">
+                  <Label htmlFor="st-country">{t("countryLabel")}</Label>
+                  <select
+                    id="st-country"
+                    value={country}
+                    onChange={(e) => setCountry(e.target.value)}
+                    className="border-input h-9 rounded-md border bg-transparent px-2 text-sm"
+                  >
+                    <option value="">—</option>
+                    {countryOptions.map(({ code, name }) => (
+                      <option key={code} value={code}>
+                        {name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={locating}
+                onClick={captureLocation}
+                className="w-fit rounded-full"
+              >
+                {locating ? (
+                  <Loader2 className="size-3.5 animate-spin" />
+                ) : (
+                  <MapPin
+                    className={`size-3.5 ${geo ? "text-green-600" : ""}`}
+                  />
+                )}
+                {geo ? t("locationSaved") : t("useMyLocation")}
+              </Button>
               <p className="-mt-2 text-xs font-light text-muted-foreground">
                 {t("locationHint")}
               </p>

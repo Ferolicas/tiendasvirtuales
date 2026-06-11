@@ -22,6 +22,25 @@ function roundEstimate(minutes: number | null): number | null {
   return Math.max(5, Math.round(minutes / 5) * 5);
 }
 
+// Festivos nacionales de hoy por país (Nager.Date, gratuita y sin clave).
+// Cache de 24 h; si la API falla, simplemente no hay aviso.
+async function holidayToday(country: string): Promise<string | null> {
+  try {
+    const year = new Date().getFullYear();
+    const res = await fetch(
+      `https://date.nager.at/api/v3/PublicHolidays/${year}/${country}`,
+      { next: { revalidate: 86_400 } }
+    );
+    if (!res.ok) return null;
+    const holidays: Array<{ date: string; localName: string }> =
+      await res.json();
+    const today = new Date().toISOString().slice(0, 10);
+    return holidays.find((h) => h.date === today)?.localName ?? null;
+  } catch {
+    return null;
+  }
+}
+
 // Directorio público de tiendas: la cara «marketplace» de Vendi (y la
 // pantalla del comprador en la futura app).
 export default async function ExplorePage() {
@@ -92,6 +111,15 @@ export default async function ExplorePage() {
     reviewsByStore.set(review.storeId, bucket);
   }
 
+  // Aviso de festivo: una consulta por país distinto presente en la lista.
+  const countries = [
+    ...new Set(list.map((s) => s.country).filter((c): c is string => !!c)),
+  ];
+  const holidayEntries = await Promise.all(
+    countries.map(async (c) => [c, await holidayToday(c)] as const)
+  );
+  const holidayByCountry = new Map(holidayEntries);
+
   const cards = list.map((store) => {
     const stats = statsByStore.get(store.id);
     const wait = stats?.waitMin ? Number(stats.waitMin) : null;
@@ -114,6 +142,10 @@ export default async function ExplorePage() {
         (store.bannerPreset ? `/banners/${store.bannerPreset}.svg` : null),
       storeCategory: store.storeCategory,
       schedule: store.schedule,
+      hours: store.hours,
+      holidayName: store.country
+        ? (holidayByCountry.get(store.country) ?? null)
+        : null,
       phone: store.phone,
       address: store.address,
       city: store.city,
