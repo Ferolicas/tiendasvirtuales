@@ -1,120 +1,54 @@
 import { Suspense } from "react";
-import { and, eq, isNull } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { stores, users } from "@/lib/db/schema";
-import { Link } from "@/i18n/navigation";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Store } from "lucide-react";
-import { CreateStoreForm } from "@/components/shared/create-store-form";
+import { users } from "@/lib/db/schema";
+import { AccountPanel } from "@/components/dashboard/account-panel";
+import { SubTabs } from "@/components/dashboard/sub-tabs";
 import { BillingCard } from "@/components/shared/billing-card";
 import { DangerZone } from "@/components/shared/danger-zone";
-import { EmptyState } from "@/components/shared/empty-state";
 
 export async function generateMetadata() {
   const t = await getTranslations("dashboard");
-  return { title: t("title") };
+  return { title: t("tabAccount") };
 }
 
-export default async function DashboardPage() {
+// Pestaña principal: Datos y suscripción.
+export default async function AccountPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
-  const t = await getTranslations("dashboard");
-  const tEmpty = await getTranslations("empty");
 
-  const [own, [me]] = await Promise.all([
-    db
-      .select()
-      .from(stores)
-      .where(
-        and(eq(stores.ownerId, session.user.id), isNull(stores.deletedAt))
-      ),
-    db
-      .select({ plan: users.plan })
-      .from(users)
-      .where(eq(users.id, session.user.id))
-      .limit(1),
-  ]);
-  const plan = me?.plan ?? "free";
+  const [me] = await db
+    .select({
+      email: users.email,
+      name: users.name,
+      phone: users.phone,
+      taxId: users.taxId,
+      address: users.address,
+      plan: users.plan,
+    })
+    .from(users)
+    .where(eq(users.id, session.user.id))
+    .limit(1);
+  if (!me) redirect("/login");
 
   return (
     <div className="grid gap-8">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
-        <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
-      </div>
-
-      {own.length > 0 ? (
-        <div className="grid gap-4 sm:grid-cols-2">
-          {own.map((store) => (
-            <Card key={store.id} className="hover-lift rounded-3xl shadow-soft">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="tracking-tight">{store.name}</CardTitle>
-                  <Badge
-                    className="rounded-full"
-                    variant={plan === "pro" ? "default" : "secondary"}
-                  >
-                    {plan}
-                  </Badge>
-                </div>
-                <CardDescription>
-                  {store.description ?? t("noDescription")}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex gap-2">
-                <Button size="sm" asChild className="rounded-full">
-                  <Link href={`/dashboard/stores/${store.id}`}>
-                    {t("manage")}
-                  </Link>
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  asChild
-                  className="rounded-full"
-                >
-                  <Link href={`/s/${store.slug}`} target="_blank">
-                    {t("viewStore")}
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      ) : (
-        <EmptyState
-          icon={Store}
-          title={tEmpty("storesTitle")}
-          hint={tEmpty("storesHint")}
-          className="max-w-md"
-        />
-      )}
-
-      <Card className="max-w-md rounded-3xl shadow-soft">
-        <CardHeader>
-          <CardTitle className="tracking-tight">{t("newStoreTitle")}</CardTitle>
-          <CardDescription>{t("newStoreSubtitle")}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <CreateStoreForm />
-        </CardContent>
-      </Card>
-
+      <SubTabs />
+      <AccountPanel
+        profile={{
+          email: me.email,
+          name: me.name,
+          phone: me.phone,
+          taxId: me.taxId,
+          address: me.address,
+        }}
+      />
       <Suspense>
-        <BillingCard plan={plan} />
+        <BillingCard plan={me.plan} />
       </Suspense>
-
       <DangerZone />
     </div>
   );

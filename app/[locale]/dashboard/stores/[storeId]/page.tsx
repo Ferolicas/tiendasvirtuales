@@ -1,11 +1,10 @@
 import { notFound, redirect } from "next/navigation";
-import { and, desc, eq, isNull } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { getTranslations } from "next-intl/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { orders, products, stores, users } from "@/lib/db/schema";
+import { stores, users } from "@/lib/db/schema";
 import { Link } from "@/i18n/navigation";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -14,18 +13,23 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { OrdersPanel } from "@/components/shared/orders-panel";
-import { ProductsPanel } from "@/components/shared/products-panel";
 import {
   ConnectButton,
   DomainCard,
   LegalForm,
-  LogoForm,
   ShippingForm,
-  StoreInfoForm,
 } from "@/components/shared/store-settings";
 
-export default async function StoreAdminPage({
+export async function generateMetadata() {
+  const t = await getTranslations("dashboard");
+  return { title: t("advancedSettings") };
+}
+
+// Ajustes avanzados de una tienda: cobros, envío, dominio propio y legal.
+// Lo básico (nombre, logo, banner, horario…) se edita en el modal de la
+// pestaña Tiendas; los pedidos viven en la comanda y los productos en su
+// pestaña global.
+export default async function StoreAdvancedPage({
   params,
 }: {
   params: Promise<{ storeId: string }>;
@@ -35,9 +39,10 @@ export default async function StoreAdminPage({
   const t = await getTranslations("dashboard");
 
   const { storeId } = await params;
-  const [store] = await db
-    .select()
+  const [row] = await db
+    .select({ store: stores, plan: users.plan })
     .from(stores)
+    .innerJoin(users, eq(stores.ownerId, users.id))
     .where(
       and(
         eq(stores.id, storeId),
@@ -46,201 +51,94 @@ export default async function StoreAdminPage({
       )
     )
     .limit(1);
-  if (!store) notFound();
-
-  const [productList, recentOrders, [me]] = await Promise.all([
-    db
-      .select()
-      .from(products)
-      .where(eq(products.storeId, store.id))
-      .orderBy(desc(products.createdAt)),
-    db
-      .select()
-      .from(orders)
-      .where(eq(orders.storeId, store.id))
-      .orderBy(desc(orders.createdAt))
-      .limit(20),
-    db
-      .select({ plan: users.plan })
-      .from(users)
-      .where(eq(users.id, session.user.id))
-      .limit(1),
-  ]);
-  const plan = me?.plan ?? "free";
+  if (!row) notFound();
+  const store = row.store;
 
   return (
     <div className="grid gap-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">{store.name}</h1>
-          <p className="text-sm text-muted-foreground">
-            {t("publicStore")}{" "}
-            <Link
-              href={`/s/${store.slug}`}
-              className="underline"
-              target="_blank"
-            >
-              /s/{store.slug}
-            </Link>
-          </p>
-        </div>
-        <Badge
-          className="rounded-full"
-          variant={plan === "pro" ? "default" : "secondary"}
-        >
-          {t("plan")} {plan}
-        </Badge>
+      <div>
+        <h1 className="text-2xl font-extrabold tracking-tight">
+          {store.name}
+        </h1>
+        <p className="text-sm text-muted-foreground">
+          {t("advancedSettings")} ·{" "}
+          <Link
+            href={`/s/${store.slug}`}
+            target="_blank"
+            className="underline-offset-2 hover:underline"
+          >
+            /s/{store.slug}
+          </Link>
+        </p>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="rounded-3xl shadow-soft">
+        <Card className="h-fit rounded-3xl shadow-soft">
           <CardHeader>
             <CardTitle className="tracking-tight">
-              {t("liveOrdersTitle")}
+              {t("paymentsTitle")}
             </CardTitle>
-            <CardDescription>{t("liveOrdersSubtitle")}</CardDescription>
+            <CardDescription>{t("paymentsText")}</CardDescription>
           </CardHeader>
           <CardContent>
-            <OrdersPanel
+            <ConnectButton
               storeId={store.id}
-              currency={store.currency}
-              initialHasMore={recentOrders.length === 20}
-              initialOrders={recentOrders.map((order) => ({
-                id: order.id,
-                customerName: order.customerName,
-                customerEmail: order.customerEmail,
-                totalCents: order.totalCents,
-                status: order.status,
-                createdAt: order.createdAt.toISOString(),
-              }))}
+              connected={Boolean(store.stripeAccountId)}
             />
           </CardContent>
         </Card>
 
-        <div className="grid gap-6">
-          <Card className="rounded-3xl shadow-soft">
-            <CardHeader>
-              <CardTitle className="tracking-tight">
-                {t("addProductTitle")}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ProductsPanel
-                storeId={store.id}
-                currency={store.currency}
-                initialProducts={productList.map((product) => ({
-                  id: product.id,
-                  name: product.name,
-                  description: product.description,
-                  priceCents: product.priceCents,
-                  stock: product.stock,
-                  active: product.active,
-                  imageUrl: product.imageUrl,
-                }))}
-              />
-            </CardContent>
-          </Card>
+        <Card className="h-fit rounded-3xl shadow-soft">
+          <CardHeader>
+            <CardTitle className="tracking-tight">
+              {t("shippingTitle")}
+            </CardTitle>
+            <CardDescription>{t("shippingText")}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ShippingForm
+              storeId={store.id}
+              initialShippingCents={store.shippingCents}
+            />
+          </CardContent>
+        </Card>
 
-          <Card className="rounded-3xl shadow-soft">
-            <CardHeader>
-              <CardTitle className="tracking-tight">
-                {t("storeInfoTitle")}
-              </CardTitle>
-              <CardDescription>{t("storeInfoText")}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <StoreInfoForm
-                storeId={store.id}
-                initialName={store.name}
-                initialDescription={store.description}
-              />
-            </CardContent>
-          </Card>
+        <Card className="h-fit rounded-3xl shadow-soft">
+          <CardHeader>
+            <CardTitle className="tracking-tight">{t("domainTitle")}</CardTitle>
+            <CardDescription>{t("domainText")}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <DomainCard
+              storeId={store.id}
+              isPro={row.plan === "pro"}
+              initialDomain={store.customDomain}
+              initialVerified={Boolean(store.domainVerifiedAt)}
+            />
+          </CardContent>
+        </Card>
 
-          <Card className="rounded-3xl shadow-soft">
-            <CardHeader>
-              <CardTitle className="tracking-tight">
-                {t("logoTitle")}
-              </CardTitle>
-              <CardDescription>{t("logoText")}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <LogoForm storeId={store.id} initialLogoUrl={store.logoUrl} />
-            </CardContent>
-          </Card>
-
-          <Card className="rounded-3xl shadow-soft">
-            <CardHeader>
-              <CardTitle className="tracking-tight">
-                {t("domainTitle")}
-              </CardTitle>
-              <CardDescription>{t("domainText")}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <DomainCard
-                storeId={store.id}
-                isPro={plan === "pro"}
-                initialDomain={store.customDomain}
-                initialVerified={Boolean(store.domainVerifiedAt)}
-              />
-            </CardContent>
-          </Card>
-
-          <Card className="rounded-3xl shadow-soft">
-            <CardHeader>
-              <CardTitle className="tracking-tight">
-                {t("paymentsTitle")}
-              </CardTitle>
-              <CardDescription>{t("paymentsText")}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ConnectButton
-                storeId={store.id}
-                connected={Boolean(store.stripeAccountId)}
-              />
-            </CardContent>
-          </Card>
-
-          <Card className="rounded-3xl shadow-soft">
-            <CardHeader>
-              <CardTitle className="tracking-tight">
-                {t("shippingTitle")}
-              </CardTitle>
-              <CardDescription>{t("shippingText")}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ShippingForm
-                storeId={store.id}
-                initialShippingCents={store.shippingCents}
-              />
-            </CardContent>
-          </Card>
-
-          <Card className="rounded-3xl shadow-soft">
-            <CardHeader>
-              <CardTitle className="tracking-tight">
-                {t("legalTitle")}
-              </CardTitle>
-              <CardDescription>{t("legalText")}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <LegalForm
-                storeId={store.id}
-                initial={{
-                  legalName: store.legalName,
-                  legalTaxId: store.legalTaxId,
-                  legalAddress: store.legalAddress,
-                  contactEmail: store.contactEmail,
-                }}
-              />
-            </CardContent>
-          </Card>
-
-        </div>
+        <Card className="h-fit rounded-3xl shadow-soft">
+          <CardHeader>
+            <CardTitle className="tracking-tight">{t("legalTitle")}</CardTitle>
+            <CardDescription>{t("legalText")}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <LegalForm
+              storeId={store.id}
+              initial={{
+                legalName: store.legalName,
+                legalTaxId: store.legalTaxId,
+                legalAddress: store.legalAddress,
+                contactEmail: store.contactEmail,
+              }}
+            />
+          </CardContent>
+        </Card>
       </div>
 
       <Button variant="outline" className="w-fit rounded-full" asChild>
-        <Link href="/dashboard">← {t("backToPanel")}</Link>
+        <Link href="/dashboard/stores">← {t("backToPanel")}</Link>
       </Button>
     </div>
   );

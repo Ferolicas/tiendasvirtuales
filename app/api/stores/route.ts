@@ -72,10 +72,8 @@ export async function POST(req: Request) {
     .insert(stores)
     .values({
       ownerId: session.user.id,
-      name: result.data.name,
-      description: result.data.description,
-      currency: result.data.currency,
       slug,
+      ...result.data,
     })
     .returning();
 

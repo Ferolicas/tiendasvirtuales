@@ -9,11 +9,26 @@ import { rateLimit, clientIdentifier } from "@/lib/rate-limit";
 import { UPLOAD_DIR } from "@/lib/storage";
 import { imageUrlSchema } from "@/lib/validations/product";
 
+const BANNER_PRESETS = [
+  "comidas",
+  "ropa",
+  "tecnologia",
+  "deportes",
+  "finanzas",
+  "belleza",
+] as const;
+
 const updateStoreSchema = z.object({
   name: z.string().min(2).max(80).optional(),
   description: z.string().max(500).optional(),
   shippingCents: z.number().int().min(0).max(100_000).optional(),
   logoUrl: imageUrlSchema.nullable().optional(),
+  bannerUrl: imageUrlSchema.nullable().optional(),
+  bannerPreset: z.enum(BANNER_PRESETS).nullable().optional(),
+  schedule: z.string().max(500).nullable().optional(),
+  phone: z.string().max(30).nullable().optional(),
+  address: z.string().max(300).nullable().optional(),
+  pickupEnabled: z.boolean().optional(),
   legalName: z.string().max(200).optional(),
   legalTaxId: z.string().max(50).optional(),
   legalAddress: z.string().max(300).optional(),
@@ -76,4 +91,35 @@ export async function PATCH(
   }
 
   return Response.json({ store: updated });
+}
+
+// Eliminar tienda (soft-delete): se despublica y desaparece del panel;
+// los pedidos quedan para contabilidad.
+export async function DELETE(
+  req: Request,
+  { params }: { params: Promise<{ storeId: string }> }
+) {
+  const session = await auth();
+  if (!session?.user?.id) return new Response("Unauthorized", { status: 401 });
+  if (!rateLimit(`store-delete:${clientIdentifier(req)}`, 10, 60_000)) {
+    return new Response("Too Many Requests", { status: 429 });
+  }
+
+  const { storeId } = await params;
+  const [store] = await db
+    .select({ id: stores.id, ownerId: stores.ownerId })
+    .from(stores)
+    .where(and(eq(stores.id, storeId), isNull(stores.deletedAt)))
+    .limit(1);
+  if (!store) return new Response("Not Found", { status: 404 });
+  if (store.ownerId !== session.user.id) {
+    return new Response("Forbidden", { status: 403 });
+  }
+
+  await db
+    .update(stores)
+    .set({ deletedAt: new Date(), customDomain: null, domainVerifiedAt: null })
+    .where(eq(stores.id, storeId));
+
+  return Response.json({ ok: true });
 }

@@ -10,9 +10,19 @@ const updateProductSchema = z.object({
   name: z.string().min(2).max(120).optional(),
   description: z.string().max(1000).nullable().optional(),
   priceCents: z.number().int().min(1).max(100_000_000).optional(),
+  compareAtCents: z
+    .number()
+    .int()
+    .min(1)
+    .max(100_000_000)
+    .nullable()
+    .optional(),
   stock: z.number().int().min(0).max(1_000_000).optional(),
+  unlimitedStock: z.boolean().optional(),
+  recommended: z.boolean().optional(),
   active: z.boolean().optional(),
   imageUrl: imageUrlSchema.nullable().optional(),
+  categoryId: z.uuid().nullable().optional(),
 });
 
 async function authorize(storeId: string, productId: string, userId: string) {
