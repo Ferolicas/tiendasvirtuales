@@ -29,5 +29,7 @@ export default async function proxy(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!api|_next|_vercel|.*\\..*).*)"],
+  // Excluye API, assets de Next, archivos con extensión y las rutas de
+  // metadata sin extensión (opengraph-image, icon, etc.).
+  matcher: ["/((?!api|_next|_vercel|opengraph-image|twitter-image|icon|apple-icon|.*\\..*).*)"],
 };
