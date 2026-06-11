@@ -52,7 +52,7 @@ export default function ForgotPasswordPage() {
               </Button>
             </div>
           ) : (
-            <form onSubmit={onSubmit} className="grid gap-4">
+            <form method="post" onSubmit={onSubmit} className="grid gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="email">{t("email")}</Label>
                 <Input id="email" name="email" type="email" required />

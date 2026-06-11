@@ -42,7 +42,7 @@ export function ShippingForm({
   }
 
   return (
-    <form onSubmit={onSubmit} className="grid gap-3">
+    <form method="post" onSubmit={onSubmit} className="grid gap-3">
       <div className="grid gap-2">
         <Label htmlFor="shipping">{t("shippingLabel")}</Label>
         <Input
@@ -109,7 +109,7 @@ export function LegalForm({
   }
 
   return (
-    <form onSubmit={onSubmit} className="grid gap-3">
+    <form method="post" onSubmit={onSubmit} className="grid gap-3">
       <div className="grid gap-2">
         <Label htmlFor="legalName">{t("legalNameLabel")}</Label>
         <Input

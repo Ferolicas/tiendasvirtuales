@@ -54,7 +54,7 @@ function ResetForm() {
             </Button>
           </div>
         ) : (
-          <form onSubmit={onSubmit} className="grid gap-4">
+          <form method="post" onSubmit={onSubmit} className="grid gap-4">
             <div className="grid gap-2">
               <Label htmlFor="password">{t("newPassword")}</Label>
               <Input

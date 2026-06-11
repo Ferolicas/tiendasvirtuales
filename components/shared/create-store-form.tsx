@@ -45,7 +45,7 @@ export function CreateStoreForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="grid gap-4">
+    <form method="post" onSubmit={onSubmit} className="grid gap-4">
       <div className="grid gap-2">
         <Label htmlFor="store-name">{t("storeName")}</Label>
         <Input

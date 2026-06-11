@@ -204,7 +204,7 @@ export function ProductsPanel({
 
   return (
     <div className="grid gap-6">
-      <form onSubmit={onCreate} className="grid gap-4">
+      <form method="post" onSubmit={onCreate} className="grid gap-4">
         <div className="grid gap-2">
           <Label htmlFor="product-name">{t("productName")}</Label>
           <Input id="product-name" name="name" minLength={2} required />
@@ -299,7 +299,7 @@ export function ProductsPanel({
               <DrawerHeader>
                 <DrawerTitle>{t("editProduct")}</DrawerTitle>
               </DrawerHeader>
-              <form onSubmit={onEdit} className="grid gap-4 px-4">
+              <form method="post" onSubmit={onEdit} className="grid gap-4 px-4">
                 <div className="grid gap-2">
                   <Label htmlFor="edit-name">{t("productName")}</Label>
                   <Input

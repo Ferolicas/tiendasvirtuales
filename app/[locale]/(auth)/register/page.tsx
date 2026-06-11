@@ -68,7 +68,7 @@ export default function RegisterPage() {
           <CardDescription>{t("registerSubtitle")}</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={onSubmit} className="grid gap-4">
+          <form method="post" onSubmit={onSubmit} className="grid gap-4">
             <div className="grid gap-2">
               <Label htmlFor="name">{t("name")}</Label>
               <Input id="name" name="name" minLength={2} required />

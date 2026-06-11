@@ -76,7 +76,7 @@ export function BuyForm({
   }
 
   return (
-    <form onSubmit={onSubmit} className="animate-fade-in grid gap-3">
+    <form method="post" onSubmit={onSubmit} className="animate-fade-in grid gap-3">
       <div className="grid gap-1">
         <Label htmlFor={`name-${productId}`}>{t("yourName")}</Label>
         <Input id={`name-${productId}`} name="name" minLength={2} required />
