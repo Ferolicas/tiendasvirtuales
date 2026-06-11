@@ -13,6 +13,12 @@ import { emitToStore } from "@/lib/realtime";
 import { getStripe, stripeConfigured } from "@/lib/stripe";
 import { feeFor } from "@/lib/plan";
 import { verifyTurnstile } from "@/lib/turnstile";
+import {
+  sendOrderConfirmationEmail,
+  sendOwnerNewOrderEmail,
+  type OrderEmailData,
+} from "@/lib/email";
+import { formatPrice } from "@/lib/format";
 
 // Endpoint público: lo usan los compradores de las tiendas. El total se
 // calcula SIEMPRE con los precios de la base de datos (productos + envío
@@ -123,10 +129,48 @@ export async function POST(req: Request) {
   emitToStore(storeId, "order:new", {
     id: order.id,
     customerName: order.customerName,
+    customerEmail: order.customerEmail,
     totalCents: order.totalCents,
     status: order.status,
     createdAt: order.createdAt,
   });
+
+  // Emails de pedido (comprador + dueño) en segundo plano: no retrasan la
+  // respuesta al comprador ni la tumban si Resend falla.
+  const emailData: OrderEmailData = {
+    storeName: store.name,
+    reference: order.id.slice(0, 8).toUpperCase(),
+    customerName: order.customerName,
+    lines: items.map((i) => {
+      const product = productById.get(i.productId);
+      return {
+        name: product?.name ?? "Producto",
+        quantity: i.quantity,
+        totalFormatted: formatPrice(
+          (product?.priceCents ?? 0) * i.quantity,
+          store.currency
+        ),
+      };
+    }),
+    shippingFormatted:
+      store.shippingCents > 0
+        ? formatPrice(store.shippingCents, store.currency)
+        : null,
+    totalFormatted: formatPrice(totalCents, store.currency),
+  };
+  void (async () => {
+    const [owner] = await db
+      .select({ email: users.email, deletedAt: users.deletedAt })
+      .from(users)
+      .where(eq(users.id, store.ownerId))
+      .limit(1);
+    await Promise.all([
+      sendOrderConfirmationEmail(order.customerEmail, emailData),
+      owner && !owner.deletedAt
+        ? sendOwnerNewOrderEmail(owner.email, emailData)
+        : Promise.resolve(),
+    ]);
+  })().catch((err) => console.error("[orders] emails fallaron:", err));
 
   // Cobro con tarjeta vía Stripe Connect (cargo directo en la cuenta de la
   // tienda con comisión de plataforma según el plan del dueño).

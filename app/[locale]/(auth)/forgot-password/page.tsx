@@ -55,7 +55,14 @@ export default function ForgotPasswordPage() {
             <form method="post" onSubmit={onSubmit} className="grid gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="email">{t("email")}</Label>
-                <Input id="email" name="email" type="email" required />
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  autoFocus
+                  required
+                />
               </div>
               <Button
                 type="submit"

@@ -66,6 +66,68 @@ export async function sendPasswordResetEmail(to: string, url: string) {
   );
 }
 
+export interface OrderEmailData {
+  storeName: string;
+  reference: string;
+  lines: { name: string; quantity: number; totalFormatted: string }[];
+  shippingFormatted: string | null;
+  totalFormatted: string;
+  customerName: string;
+}
+
+function orderTable(data: OrderEmailData): string {
+  const rows = data.lines
+    .map(
+      (line) => `
+      <tr>
+        <td style="padding:6px 0;font-size:14px">${line.quantity} × ${line.name}</td>
+        <td style="padding:6px 0;font-size:14px;text-align:right">${line.totalFormatted}</td>
+      </tr>`
+    )
+    .join("");
+  const shipping = data.shippingFormatted
+    ? `<tr><td style="padding:6px 0;font-size:13px;color:#78716c">Envío · Shipping</td><td style="padding:6px 0;font-size:13px;text-align:right;color:#78716c">${data.shippingFormatted}</td></tr>`
+    : "";
+  return `
+    <table style="width:100%;border-collapse:collapse;margin:16px 0">
+      ${rows}${shipping}
+      <tr>
+        <td style="padding:10px 0;font-size:15px;font-weight:700;border-top:1px solid #e7e5e4">Total</td>
+        <td style="padding:10px 0;font-size:15px;font-weight:700;text-align:right;border-top:1px solid #e7e5e4">${data.totalFormatted}</td>
+      </tr>
+    </table>`;
+}
+
+export async function sendOrderConfirmationEmail(
+  to: string,
+  data: OrderEmailData
+) {
+  await send(
+    to,
+    `Tu pedido en ${data.storeName} · Ref ${data.reference}`,
+    layout(`
+      <h1 style="font-size:18px">¡Pedido confirmado! · Order confirmed!</h1>
+      <p style="font-size:13px;color:#78716c;text-transform:uppercase;letter-spacing:0.1em;margin:4px 0 0">Ref · ${data.reference}</p>
+      <p style="font-size:14px;line-height:1.6;margin-top:16px">Hola ${data.customerName}: <strong>${data.storeName}</strong> ha recibido tu pedido y se pondrá en contacto contigo.<br/>
+      <span style="color:#78716c">${data.storeName} received your order and will get in touch with you.</span></p>
+      ${orderTable(data)}
+    `)
+  );
+}
+
+export async function sendOwnerNewOrderEmail(to: string, data: OrderEmailData) {
+  await send(
+    to,
+    `Nuevo pedido en ${data.storeName} — ${data.totalFormatted}`,
+    layout(`
+      <h1 style="font-size:18px">Nuevo pedido de ${data.customerName}</h1>
+      <p style="font-size:13px;color:#78716c;text-transform:uppercase;letter-spacing:0.1em;margin:4px 0 0">Ref · ${data.reference}</p>
+      ${orderTable(data)}
+      <a href="https://vendi.olcas.app/dashboard" style="display:inline-block;background:#1c1917;color:#fff;padding:12px 24px;border-radius:999px;text-decoration:none;font-size:14px">Ver en el panel</a>
+    `)
+  );
+}
+
 export async function sendAlertEmail(subject: string, text: string) {
   const to = process.env.ALERT_EMAIL;
   if (!to) return;

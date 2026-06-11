@@ -287,6 +287,9 @@ export default async function HomePage() {
           <Link href="/terms" className="hover:text-foreground">
             {t("footerTerms")}
           </Link>
+          <a href="mailto:vendi@olcas.app" className="hover:text-foreground">
+            {t("footerContact")}
+          </a>
         </nav>
         <p>
           © {new Date().getFullYear()} Vendi · {tc("byOlcas")}

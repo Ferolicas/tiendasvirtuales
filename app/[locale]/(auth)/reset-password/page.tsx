@@ -12,8 +12,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PasswordInput } from "@/components/shared/password-input";
 
 function ResetForm() {
   const t = useTranslations("auth");
@@ -57,12 +57,10 @@ function ResetForm() {
           <form method="post" onSubmit={onSubmit} className="grid gap-4">
             <div className="grid gap-2">
               <Label htmlFor="password">{t("newPassword")}</Label>
-              <Input
+              <PasswordInput
                 id="password"
-                name="password"
-                type="password"
-                minLength={8}
-                required
+                autoComplete="new-password"
+                autoFocus
               />
             </div>
             {status === "error" ? (

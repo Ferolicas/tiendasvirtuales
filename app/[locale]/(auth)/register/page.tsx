@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PasswordInput } from "@/components/shared/password-input";
 import { Turnstile } from "@/components/shared/turnstile";
 
 export default function RegisterPage() {
@@ -71,21 +72,28 @@ export default function RegisterPage() {
           <form method="post" onSubmit={onSubmit} className="grid gap-4">
             <div className="grid gap-2">
               <Label htmlFor="name">{t("name")}</Label>
-              <Input id="name" name="name" minLength={2} required />
+              <Input
+                id="name"
+                name="name"
+                minLength={2}
+                autoComplete="name"
+                autoFocus
+                required
+              />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="email">{t("email")}</Label>
-              <Input id="email" name="email" type="email" required />
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                required
+              />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="password">{t("passwordHint")}</Label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                minLength={8}
-                required
-              />
+              <PasswordInput id="password" autoComplete="new-password" />
             </div>
             <Turnstile />
             {error ? (

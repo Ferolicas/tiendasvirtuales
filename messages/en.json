@@ -61,7 +61,8 @@
     "footerLegal": "Legal notice",
     "footerPrivacy": "Privacy",
     "footerCookies": "Cookies",
-    "footerTerms": "Terms"
+    "footerTerms": "Terms",
+    "footerContact": "Contact"
   },
   "auth": {
     "loginTitle": "Sign in",
@@ -96,7 +97,9 @@
     "resetError": "The link is invalid or has expired. Request a new one.",
     "verifiedOk": "Email verified successfully. You can sign in now.",
     "verifiedFail": "The verification link is invalid or has expired.",
-    "backToLogin": "Back to sign in"
+    "backToLogin": "Back to sign in",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password"
   },
   "dashboard": {
     "title": "Your stores",

@@ -61,7 +61,8 @@
     "footerLegal": "Aviso legal",
     "footerPrivacy": "Privacidad",
     "footerCookies": "Cookies",
-    "footerTerms": "Términos"
+    "footerTerms": "Términos",
+    "footerContact": "Contacto"
   },
   "auth": {
     "loginTitle": "Entrar",
@@ -96,7 +97,9 @@
     "resetError": "El enlace no es válido o ha caducado. Pide uno nuevo.",
     "verifiedOk": "Email verificado correctamente. Ya puedes entrar.",
     "verifiedFail": "El enlace de verificación no es válido o ha caducado.",
-    "backToLogin": "Volver a entrar"
+    "backToLogin": "Volver a entrar",
+    "showPassword": "Mostrar contraseña",
+    "hidePassword": "Ocultar contraseña"
   },
   "dashboard": {
     "title": "Tus tiendas",
