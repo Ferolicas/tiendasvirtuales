@@ -83,16 +83,16 @@ export interface OrderEmailData {
 function storeLayout(data: OrderEmailData, body: string): string {
   const appUrl = process.env.APP_URL ?? "https://vendi.olcas.app";
   const logo = data.storeLogoUrl
-    ? `<img src="${data.storeLogoUrl.startsWith("http") ? data.storeLogoUrl : appUrl + data.storeLogoUrl}" alt="" width="56" height="56" style="border-radius:16px;object-fit:cover;display:block"/>`
-    : `<div style="width:56px;height:56px;border-radius:16px;background:#fdeae3;color:#b14328;font-size:26px;font-weight:800;text-align:center;line-height:56px">${data.storeName.charAt(0).toUpperCase()}</div>`;
+    ? `<img src="${data.storeLogoUrl.startsWith("http") ? data.storeLogoUrl : appUrl + data.storeLogoUrl}" alt="" width="72" height="72" style="border-radius:20px;object-fit:cover;display:inline-block"/>`
+    : `<div style="width:72px;height:72px;border-radius:20px;background:#fdeae3;color:#b14328;font-size:32px;font-weight:800;text-align:center;line-height:72px;display:inline-block">${data.storeName.charAt(0).toUpperCase()}</div>`;
   return `
   <div style="font-family:system-ui,-apple-system,sans-serif;max-width:520px;margin:0 auto;padding:32px 24px;color:#1c1917">
-    <div style="display:flex;align-items:center;gap:14px;margin-bottom:24px">
+    <div style="text-align:center;margin-bottom:28px">
       ${logo}
-      <span style="font-size:20px;font-weight:800">${data.storeName}</span>
+      <p style="font-size:21px;font-weight:800;margin:12px 0 0">${data.storeName}</p>
     </div>
     ${body}
-    <p style="font-size:11px;color:#a8a29e;margin-top:32px">Enviado con vendi<span style="color:#e0563f">●</span> · vendi.olcas.app</p>
+    <p style="font-size:11px;color:#a8a29e;margin-top:32px;text-align:center">Enviado con vendi<span style="color:#e0563f">●</span> · vendi.olcas.app</p>
   </div>`;
 }
 

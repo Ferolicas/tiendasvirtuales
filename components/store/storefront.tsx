@@ -721,6 +721,7 @@ function ActiveOrderBar({
 
       <Drawer
         open={expanded}
+        repositionInputs={false}
         onOpenChange={(open) => {
           if (!open) {
             setExpanded(false);

@@ -261,6 +261,7 @@ export function TrackOrder({
         <form
           method="post"
           onSubmit={submitReview}
+          data-vaul-no-drag
           className="animate-fade-up mx-auto grid w-full max-w-sm gap-4 rounded-3xl border bg-card p-6 text-center shadow-soft"
         >
           <p className="font-bold tracking-tight">{t("rateTitle")}</p>
