@@ -4,10 +4,12 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { stores } from "@/lib/db/schema";
 import { rateLimit, clientIdentifier } from "@/lib/rate-limit";
+import { imageUrlSchema } from "@/lib/validations/product";
 
 const updateStoreSchema = z.object({
   description: z.string().max(500).optional(),
   shippingCents: z.number().int().min(0).max(100_000).optional(),
+  logoUrl: imageUrlSchema.nullable().optional(),
   legalName: z.string().max(200).optional(),
   legalTaxId: z.string().max(50).optional(),
   legalAddress: z.string().max(300).optional(),

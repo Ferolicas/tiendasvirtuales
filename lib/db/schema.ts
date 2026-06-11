@@ -64,6 +64,10 @@ export const stores = pgTable("stores", {
   logoUrl: text("logo_url"),
   currency: text("currency").notNull().default("EUR"),
   shippingCents: integer("shipping_cents").notNull().default(0),
+  // Dominio propio (plan Pro): apunta por DNS al VPS y Caddy emite el SSL
+  // bajo demanda. domainVerifiedAt marca cuándo se comprobó el DNS.
+  customDomain: text("custom_domain").unique(),
+  domainVerifiedAt: timestamp("domain_verified_at", { withTimezone: true }),
   // Datos legales del comerciante para la página legal autogenerada de la
   // tienda (aviso legal + devoluciones).
   legalName: text("legal_name"),

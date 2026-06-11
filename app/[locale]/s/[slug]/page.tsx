@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { and, desc, eq, isNull } from "drizzle-orm";
 import type { Metadata } from "next";
@@ -54,6 +55,17 @@ export default async function PublicStorePage({
     <main className="flex-1">
       <header className="border-b bg-secondary/40">
         <div className="mx-auto max-w-5xl px-5 py-14 text-center sm:px-6">
+          {store.logoUrl ? (
+            <span className="relative mx-auto mb-5 block size-20 overflow-hidden rounded-3xl border bg-card shadow-soft">
+              <Image
+                src={store.logoUrl}
+                alt={store.name}
+                fill
+                sizes="80px"
+                className="object-cover"
+              />
+            </span>
+          ) : null}
           <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
             {store.name}
           </h1>

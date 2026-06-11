@@ -47,13 +47,17 @@ export async function POST(req: Request) {
     return new Response("Forbidden", { status: 403 });
   }
 
+  // kind=logo → 512px (cabeceras y avatares); por defecto producto → 1200px.
+  const kind = form?.get("kind") === "logo" ? "logo" : "product";
+  const maxSize = kind === "logo" ? 512 : 1200;
+
   const input = Buffer.from(await file.arrayBuffer());
   let processed: Buffer;
   try {
     processed = await sharp(input)
       .rotate()
-      .resize(1200, 1200, { fit: "inside", withoutEnlargement: true })
-      .webp({ quality: 80 })
+      .resize(maxSize, maxSize, { fit: "inside", withoutEnlargement: true })
+      .webp({ quality: 80, effort: 6 })
       .toBuffer();
   } catch {
     return Response.json({ error: "invalid_file" }, { status: 400 });

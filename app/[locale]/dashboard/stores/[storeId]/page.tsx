@@ -18,7 +18,9 @@ import { OrdersPanel } from "@/components/shared/orders-panel";
 import { ProductsPanel } from "@/components/shared/products-panel";
 import {
   ConnectButton,
+  DomainCard,
   LegalForm,
+  LogoForm,
   ShippingForm,
 } from "@/components/shared/store-settings";
 
@@ -134,6 +136,35 @@ export default async function StoreAdminPage({
                   active: product.active,
                   imageUrl: product.imageUrl,
                 }))}
+              />
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-3xl shadow-soft">
+            <CardHeader>
+              <CardTitle className="tracking-tight">
+                {t("logoTitle")}
+              </CardTitle>
+              <CardDescription>{t("logoText")}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <LogoForm storeId={store.id} initialLogoUrl={store.logoUrl} />
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-3xl shadow-soft">
+            <CardHeader>
+              <CardTitle className="tracking-tight">
+                {t("domainTitle")}
+              </CardTitle>
+              <CardDescription>{t("domainText")}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <DomainCard
+                storeId={store.id}
+                isPro={plan === "pro"}
+                initialDomain={store.customDomain}
+                initialVerified={Boolean(store.domainVerifiedAt)}
               />
             </CardContent>
           </Card>
