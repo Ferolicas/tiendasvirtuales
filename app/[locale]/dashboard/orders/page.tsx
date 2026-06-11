@@ -122,6 +122,7 @@ export default async function OrdersDashboardPage() {
     storeId: order.storeId,
     storeName: storeNameById.get(order.storeId) ?? "",
     customerName: order.customerName,
+    customerEmail: order.customerEmail,
     customerPhone: order.customerPhone,
     fulfillment: order.fulfillment,
     deliveryAddress: order.deliveryAddress,

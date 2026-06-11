@@ -22,10 +22,8 @@ export const createOrderSchema = z
   .refine(
     (o) => o.fulfillment !== "delivery" || Boolean(o.deliveryAddress),
     { message: "delivery_address_required", path: ["deliveryAddress"] }
-  )
-  .refine((o) => o.paymentMethod !== "in_store" || o.fulfillment === "pickup", {
-    message: "in_store_requires_pickup",
-    path: ["paymentMethod"],
-  });
+  );
+// «in_store» = pago al recibir: en tienda (recogida) o en efectivo al
+// repartidor (domicilio). Ambos entran directos a la comanda.
 
 export type CreateOrderInput = z.infer<typeof createOrderSchema>;

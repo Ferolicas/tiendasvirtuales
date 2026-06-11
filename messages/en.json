@@ -374,12 +374,21 @@
     "pickupBadge": "Pickup",
     "payCardBadge": "Card",
     "payInStoreBadge": "Collect in store",
+    "payCashBadge": "Cash",
+    "cashPendingBadge": "Cash payment pending",
     "readyPickupInfo": "Ready for pickup",
     "cancelReasonTitle": "Why is order #{number} being cancelled?",
     "cancelReasonPlaceholder": "E.g.: we ran out of ingredients",
     "cancelConfirm": "Cancel order",
     "cancelKeep": "Go back",
-    "storeLabel": "Store"
+    "storeLabel": "Store",
+    "detailTitle": "Order details",
+    "enteredAt": "Entered",
+    "phaseWaitLabel": "Wait until accepted",
+    "phaseKitchenLabel": "Time in kitchen",
+    "phaseDeliveryLabel": "Time in delivery",
+    "detailCustomer": "Customer",
+    "detailReason": "Cancellation reason"
   },
   "store": {
     "noProducts": "This store doesn't have products yet.",
@@ -436,6 +445,9 @@
     "paymentLabel": "How do you pay?",
     "payCard": "By card",
     "payInStore": "Pay at the store",
+    "payCash": "Cash on delivery",
+    "activeOrderLabel": "Order #{number}",
+    "activeOrderOpen": "View my order",
     "trackOrder": "Track my order",
     "trackHint": "Save this link to track your order in real time."
   }

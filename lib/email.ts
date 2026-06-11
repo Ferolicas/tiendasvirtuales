@@ -123,7 +123,7 @@ export async function sendOwnerNewOrderEmail(to: string, data: OrderEmailData) {
       <h1 style="font-size:18px">Nuevo pedido de ${data.customerName}</h1>
       <p style="font-size:13px;color:#78716c;text-transform:uppercase;letter-spacing:0.1em;margin:4px 0 0">Ref · ${data.reference}</p>
       ${orderTable(data)}
-      <a href="https://vendi.olcas.app/dashboard" style="display:inline-block;background:#1c1917;color:#fff;padding:12px 24px;border-radius:999px;text-decoration:none;font-size:14px">Ver en el panel</a>
+      <a href="https://vendi.olcas.app/dashboard/orders" style="display:inline-block;background:#1c1917;color:#fff;padding:12px 24px;border-radius:999px;text-decoration:none;font-size:14px">Ver en el panel</a>
     `)
   );
 }

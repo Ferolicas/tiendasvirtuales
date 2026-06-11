@@ -36,8 +36,11 @@ import {
 } from "@/components/ui/drawer";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Turnstile } from "@/components/shared/turnstile";
-import { VendiDot } from "@/components/shared/vendi-dot";
+import { VendiDot, VendiLiveDot } from "@/components/shared/vendi-dot";
+import { TrackOrder } from "@/components/store/track-order";
 import { formatPrice } from "@/lib/format";
+import { ChevronUp } from "lucide-react";
+import { io as ioClient, type Socket as SocketType } from "socket.io-client";
 
 export interface StorefrontStore {
   id: string;
@@ -145,6 +148,12 @@ export function Storefront({
   const [hydrated, setHydrated] = useState(false);
   const [detail, setDetail] = useState<StorefrontProduct | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
+  // Pedido en curso del comprador en ESTA tienda (persistente entre visitas)
+  const [activeOrderId, setActiveOrderId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setActiveOrderId(localStorage.getItem(`vendi-active-order-${store.id}`));
+  }, [store.id]);
   const [highlightTab, setHighlightTab] = useState<"recommended" | "best">(
     "recommended"
   );
@@ -350,12 +359,24 @@ export function Storefront({
         }}
       />
 
-      <CartButton onOpen={() => setCartOpen(true)} />
+      <CartButton onOpen={() => setCartOpen(true)} lifted={Boolean(activeOrderId)} />
       <CartDrawer
         open={cartOpen}
         onClose={() => setCartOpen(false)}
         store={store}
         productById={productById}
+        onOrderPlaced={(orderId) => {
+          localStorage.setItem(`vendi-active-order-${store.id}`, orderId);
+          setActiveOrderId(orderId);
+        }}
+      />
+      <ActiveOrderBar
+        storeId={store.id}
+        orderId={activeOrderId}
+        onClear={() => {
+          localStorage.removeItem(`vendi-active-order-${store.id}`);
+          setActiveOrderId(null);
+        }}
       />
     </CartContext.Provider>
   );
@@ -582,7 +603,13 @@ function ProductDetailDrawer({
 }
 
 // ── Botón flotante del carrito ───────────────────────────────────────────
-function CartButton({ onOpen }: { onOpen: () => void }) {
+function CartButton({
+  onOpen,
+  lifted,
+}: {
+  onOpen: () => void;
+  lifted: boolean;
+}) {
   const t = useTranslations("store");
   const cart = useCart();
   if (cart.count === 0) return null;
@@ -592,7 +619,9 @@ function CartButton({ onOpen }: { onOpen: () => void }) {
       type="button"
       onClick={onOpen}
       aria-label={t("cart")}
-      className="animate-fade-up fixed bottom-5 right-5 z-40 flex items-center gap-2.5 rounded-full bg-primary px-5 py-3.5 font-bold text-primary-foreground shadow-soft transition-transform hover:scale-[1.03] active:scale-[0.97]"
+      className={`animate-fade-up fixed right-5 z-40 flex items-center gap-2.5 rounded-full bg-primary px-5 py-3.5 font-bold text-primary-foreground shadow-soft transition-all hover:scale-[1.03] active:scale-[0.97] ${
+        lifted ? "bottom-20" : "bottom-5"
+      }`}
     >
       <ShoppingBag className="size-5" />
       {t("cart")}
@@ -603,17 +632,137 @@ function CartButton({ onOpen }: { onOpen: () => void }) {
   );
 }
 
+// ── Barra persistente del pedido en curso ────────────────────────────────
+// Vive abajo vaya donde vaya el comprador dentro de la tienda; al tocarla
+// se expande el seguimiento completo; la X solo la minimiza. Desaparece
+// únicamente cuando el pedido termina (entregado/cancelado) y se descarta.
+interface TrackedSummary {
+  id: string;
+  orderNumber: number;
+  status: string;
+  fulfillment: "delivery" | "pickup";
+  customerName: string;
+  storeName: string;
+  storePhone: string | null;
+  hasReview: boolean;
+}
+
+function ActiveOrderBar({
+  storeId,
+  orderId,
+  onClear,
+}: {
+  storeId: string;
+  orderId: string | null;
+  onClear: () => void;
+}) {
+  const t = useTranslations("store");
+  const tStatus = useTranslations("status");
+  const [data, setData] = useState<TrackedSummary | null>(null);
+  const [expanded, setExpanded] = useState(false);
+
+  useEffect(() => {
+    if (!orderId) {
+      setData(null);
+      return;
+    }
+    let cancelled = false;
+    fetch(`/api/track/${orderId}`).then(async (res) => {
+      if (cancelled) return;
+      if (!res.ok) {
+        onClear();
+        return;
+      }
+      setData(await res.json());
+    });
+
+    const socket: SocketType = ioClient({
+      transports: ["websocket", "polling"],
+    });
+    socket.on("connect", () => socket.emit("order:join", orderId));
+    socket.on("order:update", ({ status }: { status: string }) => {
+      setData((prev) => (prev ? { ...prev, status } : prev));
+    });
+    return () => {
+      cancelled = true;
+      socket.disconnect();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orderId, storeId]);
+
+  if (!orderId || !data) return null;
+
+  const normalized = data.status === "shipped" ? "delivered" : data.status;
+  const finished = normalized === "delivered" || normalized === "cancelled";
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setExpanded(true)}
+        aria-label={t("activeOrderOpen")}
+        className="animate-fade-up fixed inset-x-0 bottom-0 z-40 flex items-center gap-3 border-t bg-card/95 px-5 py-3 text-left shadow-soft backdrop-blur-md"
+      >
+        {finished ? (
+          <VendiDot className="size-2.5" />
+        ) : (
+          <VendiLiveDot />
+        )}
+        <span className="min-w-0 flex-1 truncate text-sm">
+          <span className="font-extrabold tracking-tight">
+            {t("activeOrderLabel", { number: data.orderNumber })}
+          </span>{" "}
+          <span className="text-muted-foreground">
+            · {tStatus(normalized as "paid")}
+          </span>
+        </span>
+        <ChevronUp className="size-4 text-muted-foreground" />
+      </button>
+
+      <Drawer
+        open={expanded}
+        onOpenChange={(open) => {
+          if (!open) {
+            setExpanded(false);
+            // Si ya terminó, al cerrar se descarta para siempre.
+            if (finished) onClear();
+          }
+        }}
+      >
+        <DrawerContent className="max-h-[92dvh]">
+          <div className="mx-auto w-full max-w-md overflow-y-auto px-4 pb-10 pt-6">
+            <TrackOrder
+              order={{
+                id: data.id,
+                orderNumber: data.orderNumber,
+                status: data.status,
+                fulfillment: data.fulfillment,
+                customerName: data.customerName,
+                hasReview: data.hasReview,
+              }}
+              storeName={data.storeName}
+              storePhone={data.storePhone}
+            />
+          </div>
+        </DrawerContent>
+      </Drawer>
+    </>
+  );
+}
+
 // ── Carrito + checkout v2 + confirmación con seguimiento ────────────────
 function CartDrawer({
   open,
   onClose,
   store,
   productById,
+  onOrderPlaced,
 }: {
   open: boolean;
   onClose: () => void;
   store: StorefrontStore;
   productById: Map<string, StorefrontProduct>;
+  onOrderPlaced: (orderId: string) => void;
 }) {
   const t = useTranslations("store");
   const cart = useCart();
@@ -660,7 +809,7 @@ function CartDrawer({
         fulfillment,
         deliveryAddress:
           fulfillment === "delivery" ? form.get("address") : undefined,
-        paymentMethod: fulfillment === "pickup" ? payment : "card",
+        paymentMethod: payment,
         items: lines.map((l) => ({
           productId: l.product.id,
           quantity: l.quantity,
@@ -680,6 +829,9 @@ function CartDrawer({
 
     const data = await res.json();
     cart.clear();
+    // El pedido queda «en curso» en esta tienda (barra persistente),
+    // también si nos vamos a Stripe y volvemos.
+    onOrderPlaced(data.order.id);
     if (data.checkoutUrl) {
       window.location.href = data.checkoutUrl;
       return;
@@ -774,23 +926,25 @@ function CartDrawer({
                   </div>
                 </div>
 
-                {/* Domicilio o recogida */}
-                {store.pickupEnabled ? (
-                  <div className="grid gap-2">
-                    <Label>{t("fulfillmentLabel")}</Label>
-                    <div className="grid grid-cols-2 gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setFulfillment("delivery")}
-                        className={`flex items-center justify-center gap-2 rounded-2xl border px-3 py-2.5 text-sm font-bold transition-colors ${
-                          fulfillment === "delivery"
-                            ? "border-primary bg-primary text-primary-foreground"
-                            : "text-muted-foreground"
-                        }`}
-                      >
-                        <Bike className="size-4" />
-                        {t("deliveryOption")}
-                      </button>
+                {/* Domicilio o recogida — siempre visible */}
+                <div className="grid gap-2">
+                  <Label>{t("fulfillmentLabel")}</Label>
+                  <div
+                    className={`grid gap-2 ${store.pickupEnabled ? "grid-cols-2" : ""}`}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setFulfillment("delivery")}
+                      className={`flex items-center justify-center gap-2 rounded-2xl border px-3 py-2.5 text-sm font-bold transition-colors ${
+                        fulfillment === "delivery"
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "text-muted-foreground"
+                      }`}
+                    >
+                      <Bike className="size-4" />
+                      {t("deliveryOption")}
+                    </button>
+                    {store.pickupEnabled ? (
                       <button
                         type="button"
                         onClick={() => setFulfillment("pickup")}
@@ -803,9 +957,9 @@ function CartDrawer({
                         <StoreIcon className="size-4" />
                         {t("pickupOption")}
                       </button>
-                    </div>
+                    ) : null}
                   </div>
-                ) : null}
+                </div>
 
                 {fulfillment === "delivery" ? (
                   <div className="grid gap-2">
@@ -820,44 +974,48 @@ function CartDrawer({
                       required
                     />
                   </div>
-                ) : (
-                  <div className="grid gap-2">
-                    <Label>{t("paymentLabel")}</Label>
-                    <div className="grid grid-cols-2 gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setPayment("card")}
-                        className={`flex items-center justify-center gap-2 rounded-2xl border px-3 py-2.5 text-sm font-bold transition-colors ${
-                          payment === "card"
-                            ? "border-primary bg-primary text-primary-foreground"
-                            : "text-muted-foreground"
-                        }`}
-                      >
-                        <CreditCard className="size-4" />
-                        {t("payCard")}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setPayment("in_store")}
-                        className={`flex items-center justify-center gap-2 rounded-2xl border px-3 py-2.5 text-sm font-bold transition-colors ${
-                          payment === "in_store"
-                            ? "border-primary bg-primary text-primary-foreground"
-                            : "text-muted-foreground"
-                        }`}
-                      >
-                        <Wallet className="size-4" />
-                        {t("payInStore")}
-                      </button>
-                    </div>
+                ) : null}
+
+                {/* Pago: online siempre; en tienda (recogida) o efectivo
+                    al recibir (domicilio) */}
+                <div className="grid gap-2">
+                  <Label>{t("paymentLabel")}</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setPayment("card")}
+                      className={`flex items-center justify-center gap-2 rounded-2xl border px-3 py-2.5 text-sm font-bold transition-colors ${
+                        payment === "card"
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "text-muted-foreground"
+                      }`}
+                    >
+                      <CreditCard className="size-4" />
+                      {t("payCard")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPayment("in_store")}
+                      className={`flex items-center justify-center gap-2 rounded-2xl border px-3 py-2.5 text-sm font-bold transition-colors ${
+                        payment === "in_store"
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "text-muted-foreground"
+                      }`}
+                    >
+                      <Wallet className="size-4" />
+                      {fulfillment === "pickup"
+                        ? t("payInStore")
+                        : t("payCash")}
+                    </button>
                   </div>
-                )}
+                </div>
 
                 <div className="flex items-center justify-between rounded-2xl bg-secondary/60 px-4 py-3 text-sm font-bold">
                   <span>{t("total")}</span>
                   <span>{formatPrice(total, store.currency)}</span>
                 </div>
                 <Turnstile />
-                {fulfillment === "delivery" || payment === "card" ? (
+                {payment === "card" ? (
                   <p className="text-xs font-light text-muted-foreground">
                     {t("payNote")}
                   </p>

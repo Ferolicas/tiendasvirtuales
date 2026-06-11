@@ -31,6 +31,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
 import { EmptyState } from "@/components/shared/empty-state";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { VendiLiveDot } from "@/components/shared/vendi-dot";
@@ -42,6 +48,7 @@ export interface ComandaOrder {
   storeId: string;
   storeName: string;
   customerName: string;
+  customerEmail: string;
   customerPhone: string | null;
   fulfillment: "delivery" | "pickup";
   deliveryAddress: string | null;
@@ -133,6 +140,7 @@ export function ComandaBoard({
     "delivered"
   );
   const [cancelTarget, setCancelTarget] = useState<ComandaOrder | null>(null);
+  const [detailOrder, setDetailOrder] = useState<ComandaOrder | null>(null);
   const cancelReason = useRef("");
 
   // Tick del contador (1 s)
@@ -498,9 +506,11 @@ export function ComandaBoard({
           )
             .slice(0, 30)
             .map((order) => (
-              <div
+              <button
                 key={order.id}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-xl border px-3 py-2 text-sm"
+                type="button"
+                onClick={() => setDetailOrder(order)}
+                className="flex flex-wrap items-center justify-between gap-2 rounded-xl border px-3 py-2 text-left text-sm transition-colors hover:bg-secondary/60"
               >
                 <span className="font-bold">#{order.orderNumber}</span>
                 <span className="flex-1 truncate">{order.customerName}</span>
@@ -513,10 +523,148 @@ export function ComandaBoard({
                   {formatPrice(order.totalCents, currency)}
                 </span>
                 <StatusBadge status={order.status} />
-              </div>
+              </button>
             ))}
         </div>
       </div>
+
+      {/* Detalle completo de un pedido del historial */}
+      <Drawer
+        open={Boolean(detailOrder)}
+        onOpenChange={(open) => {
+          if (!open) setDetailOrder(null);
+        }}
+      >
+        <DrawerContent className="max-h-[92dvh]">
+          {detailOrder ? (
+            <div className="mx-auto w-full max-w-md overflow-y-auto pb-8">
+              <DrawerHeader>
+                <DrawerTitle className="flex items-center justify-between gap-3 tracking-tight">
+                  {t("detailTitle")} · #{detailOrder.orderNumber}
+                  <StatusBadge status={detailOrder.status} />
+                </DrawerTitle>
+              </DrawerHeader>
+              <div className="grid gap-4 px-4 text-sm">
+                <div className="grid gap-1.5 rounded-2xl bg-secondary/60 p-4">
+                  <p className="flex justify-between">
+                    <span className="text-muted-foreground">
+                      {t("enteredAt")}
+                    </span>
+                    <span className="font-medium">
+                      {new Date(detailOrder.createdAt).toLocaleString()}
+                    </span>
+                  </p>
+                  {detailOrder.acceptedAt ? (
+                    <p className="flex justify-between">
+                      <span className="text-muted-foreground">
+                        {t("phaseWaitLabel")}
+                      </span>
+                      <span className="font-mono font-bold">
+                        {diff(detailOrder.createdAt, detailOrder.acceptedAt)}
+                      </span>
+                    </p>
+                  ) : null}
+                  {detailOrder.acceptedAt && detailOrder.readyAt ? (
+                    <p className="flex justify-between">
+                      <span className="text-muted-foreground">
+                        {t("phaseKitchenLabel")}
+                      </span>
+                      <span className="font-mono font-bold">
+                        {diff(detailOrder.acceptedAt, detailOrder.readyAt)}
+                      </span>
+                    </p>
+                  ) : null}
+                  {detailOrder.readyAt && detailOrder.deliveredAt ? (
+                    <p className="flex justify-between">
+                      <span className="text-muted-foreground">
+                        {t("phaseDeliveryLabel")}
+                      </span>
+                      <span className="font-mono font-bold">
+                        {diff(detailOrder.readyAt, detailOrder.deliveredAt)}
+                      </span>
+                    </p>
+                  ) : null}
+                </div>
+
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <Badge variant="secondary" className="gap-1 rounded-full">
+                    {detailOrder.fulfillment === "pickup" ? (
+                      <StoreIcon className="size-3" />
+                    ) : (
+                      <Bike className="size-3" />
+                    )}
+                    {detailOrder.fulfillment === "pickup"
+                      ? t("pickupBadge")
+                      : t("deliveryBadge")}
+                  </Badge>
+                  <Badge variant="secondary" className="gap-1 rounded-full">
+                    {detailOrder.paymentMethod === "card" ? (
+                      <CreditCard className="size-3" />
+                    ) : (
+                      <Wallet className="size-3" />
+                    )}
+                    {detailOrder.paymentMethod === "card"
+                      ? t("payCardBadge")
+                      : detailOrder.fulfillment === "pickup"
+                        ? t("payInStoreBadge")
+                        : t("payCashBadge")}
+                  </Badge>
+                  <span className="ml-auto text-base font-extrabold">
+                    {formatPrice(detailOrder.totalCents, currency)}
+                  </span>
+                </div>
+
+                <div className="grid gap-0.5 border-y py-2">
+                  {detailOrder.lines.map((line, i) => (
+                    <p key={i}>
+                      <span className="font-bold">{line.quantity}×</span>{" "}
+                      {line.name}
+                    </p>
+                  ))}
+                </div>
+
+                <div className="grid gap-1 rounded-2xl bg-secondary/60 p-4">
+                  <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    {t("detailCustomer")}
+                  </p>
+                  <p className="font-medium">{detailOrder.customerName}</p>
+                  <p className="text-muted-foreground">
+                    {detailOrder.customerEmail}
+                  </p>
+                  {detailOrder.customerPhone ? (
+                    <a
+                      href={`tel:${detailOrder.customerPhone}`}
+                      className="flex w-fit items-center gap-1 text-muted-foreground hover:text-foreground"
+                    >
+                      <Phone className="size-3" />
+                      {detailOrder.customerPhone}
+                    </a>
+                  ) : null}
+                  {detailOrder.deliveryAddress ? (
+                    <p className="flex items-start gap-1 text-muted-foreground">
+                      <MapPin className="mt-0.5 size-3 shrink-0" />
+                      {detailOrder.deliveryAddress}
+                    </p>
+                  ) : null}
+                </div>
+
+                {detailOrder.cancelReason ? (
+                  <div className="grid gap-1 rounded-2xl bg-red-500/10 p-4">
+                    <p className="text-xs font-medium uppercase tracking-wider text-red-700 dark:text-red-300">
+                      {t("detailReason")}
+                    </p>
+                    <p>{detailOrder.cancelReason}</p>
+                  </div>
+                ) : null}
+
+                <p className="text-xs text-muted-foreground">
+                  {t("storeLabel")}: {detailOrder.storeName}
+                </p>
+              </div>
+            </div>
+          ) : null}
+        </DrawerContent>
+      </Drawer>
 
       {/* Motivo de cancelación */}
       <AlertDialog
@@ -673,7 +821,15 @@ function ComandaColumn({
                     ? t("pickupBadge")
                     : t("deliveryBadge")}
                 </Badge>
-                <Badge variant="secondary" className="gap-1 rounded-full">
+                <Badge
+                  variant="secondary"
+                  className={`gap-1 rounded-full ${
+                    order.paymentMethod === "in_store" &&
+                    order.status === "pending"
+                      ? "bg-amber-500/15 text-amber-700 dark:text-amber-300"
+                      : ""
+                  }`}
+                >
                   {order.paymentMethod === "card" ? (
                     <CreditCard className="size-3" />
                   ) : (
@@ -681,7 +837,11 @@ function ComandaColumn({
                   )}
                   {order.paymentMethod === "card"
                     ? t("payCardBadge")
-                    : t("payInStoreBadge")}
+                    : order.status === "pending"
+                      ? t("cashPendingBadge")
+                      : order.fulfillment === "pickup"
+                        ? t("payInStoreBadge")
+                        : t("payCashBadge")}
                 </Badge>
                 <span className="ml-auto font-extrabold">
                   {formatPrice(order.totalCents, currency)}

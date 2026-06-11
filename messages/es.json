@@ -374,12 +374,21 @@
     "pickupBadge": "Recogida",
     "payCardBadge": "Tarjeta",
     "payInStoreBadge": "Cobrar en tienda",
+    "payCashBadge": "Efectivo",
+    "cashPendingBadge": "Pago en efectivo pendiente",
     "readyPickupInfo": "Listo para recoger",
     "cancelReasonTitle": "¿Por qué se cancela el pedido #{number}?",
     "cancelReasonPlaceholder": "Ej.: nos quedamos sin ingredientes",
     "cancelConfirm": "Cancelar pedido",
     "cancelKeep": "Volver",
-    "storeLabel": "Tienda"
+    "storeLabel": "Tienda",
+    "detailTitle": "Detalle del pedido",
+    "enteredAt": "Entró",
+    "phaseWaitLabel": "Espera hasta aceptar",
+    "phaseKitchenLabel": "Tiempo en cocina",
+    "phaseDeliveryLabel": "Tiempo en reparto",
+    "detailCustomer": "Cliente",
+    "detailReason": "Motivo de cancelación"
   },
   "store": {
     "noProducts": "Esta tienda todavía no tiene productos.",
@@ -436,6 +445,9 @@
     "paymentLabel": "¿Cómo pagas?",
     "payCard": "Con tarjeta",
     "payInStore": "Pagar en tienda",
+    "payCash": "Efectivo al recibir",
+    "activeOrderLabel": "Pedido #{number}",
+    "activeOrderOpen": "Ver mi pedido",
     "trackOrder": "Seguir mi pedido",
     "trackHint": "Guarda este enlace para seguir tu pedido en tiempo real."
   }
