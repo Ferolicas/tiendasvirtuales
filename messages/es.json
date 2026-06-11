@@ -62,7 +62,8 @@
     "footerPrivacy": "Privacidad",
     "footerCookies": "Cookies",
     "footerTerms": "Términos",
-    "footerContact": "Contacto"
+    "footerContact": "Contacto",
+    "exploreLink": "Explorar tiendas"
   },
   "auth": {
     "loginTitle": "Entrar",
@@ -157,6 +158,15 @@
     "connectLoading": "Abriendo Stripe…",
     "connectPendingStripe": "Verificación pendiente en Stripe",
     "connectContinue": "Continuar activación",
+    "pushTitle": "Notificaciones de pedidos",
+    "pushText": "Recibe un aviso en tu móvil u ordenador cada vez que entra un pedido, aunque el navegador esté cerrado.",
+    "pushEnable": "Activar notificaciones",
+    "pushEnabled": "¡Notificaciones activadas!",
+    "pushActive": "Activas en este dispositivo",
+    "pushDisable": "Desactivar",
+    "pushDenied": "Las notificaciones están bloqueadas en tu navegador. Desbloquéalas en los ajustes del sitio y recarga.",
+    "pushIosHint": "Tu navegador no las soporta aquí. En iPhone: Compartir → «Añadir a pantalla de inicio» y actívalas desde la app instalada.",
+    "pushFailed": "No se pudieron activar las notificaciones",
     "storeCategoryLabel": "Categoría de la tienda",
     "storeCat_moda": "Moda y ropa",
     "storeCat_hogar": "Hogar y decoración",
@@ -358,6 +368,14 @@
     "proTitle": "¡Bienvenido a Pro!",
     "proText": "Tiendas y productos ilimitados, tu propio dominio y solo 1 % de comisión. Gracias por confiar en Vendi.",
     "proCta": "Seguir vendiendo"
+  },
+  "explore": {
+    "title": "Explora las tiendas",
+    "subtitle": "Descubre los negocios que ya venden con Vendi.",
+    "searchPlaceholder": "Buscar tiendas…",
+    "allCategories": "Todas las categorías",
+    "visit": "Visitar tienda",
+    "empty": "Aún no hay tiendas aquí. ¡La tuya puede ser la primera!"
   },
   "comanda": {
     "masterStores": "Tiendas",

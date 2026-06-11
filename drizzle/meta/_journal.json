@@ -57,6 +57,13 @@
       "when": 1781180072485,
       "tag": "0007_minor_captain_britain",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1781182426708,
+      "tag": "0008_careless_thunderball",
+      "breakpoints": true
     }
   ]
 }

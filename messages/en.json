@@ -62,7 +62,8 @@
     "footerPrivacy": "Privacy",
     "footerCookies": "Cookies",
     "footerTerms": "Terms",
-    "footerContact": "Contact"
+    "footerContact": "Contact",
+    "exploreLink": "Explore stores"
   },
   "auth": {
     "loginTitle": "Sign in",
@@ -157,6 +158,15 @@
     "connectLoading": "Opening Stripe…",
     "connectPendingStripe": "Verification pending at Stripe",
     "connectContinue": "Continue activation",
+    "pushTitle": "Order notifications",
+    "pushText": "Get an alert on your phone or computer every time an order comes in, even with the browser closed.",
+    "pushEnable": "Enable notifications",
+    "pushEnabled": "Notifications enabled!",
+    "pushActive": "Active on this device",
+    "pushDisable": "Disable",
+    "pushDenied": "Notifications are blocked in your browser. Unblock them in the site settings and reload.",
+    "pushIosHint": "Your browser doesn't support them here. On iPhone: Share → \"Add to Home Screen\" and enable them from the installed app.",
+    "pushFailed": "Couldn't enable notifications",
     "storeCategoryLabel": "Store category",
     "storeCat_moda": "Fashion & apparel",
     "storeCat_hogar": "Home & decor",
@@ -358,6 +368,14 @@
     "proTitle": "Welcome to Pro!",
     "proText": "Unlimited stores and products, your own domain and only a 1% fee. Thank you for trusting Vendi.",
     "proCta": "Keep selling"
+  },
+  "explore": {
+    "title": "Explore the stores",
+    "subtitle": "Discover the businesses already selling with Vendi.",
+    "searchPlaceholder": "Search stores…",
+    "allCategories": "All categories",
+    "visit": "Visit store",
+    "empty": "No stores here yet. Yours could be the first!"
   },
   "comanda": {
     "masterStores": "Stores",

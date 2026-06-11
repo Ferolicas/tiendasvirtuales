@@ -14,6 +14,7 @@ import { getStripe, stripeConfigured } from "@/lib/stripe";
 import { feeFor } from "@/lib/plan";
 import { verifyTurnstile } from "@/lib/turnstile";
 import { verticalFor } from "@/lib/verticals";
+import { sendPushToUser } from "@/lib/push";
 import {
   sendOrderConfirmationEmail,
   sendOwnerNewOrderEmail,
@@ -211,6 +212,14 @@ export async function POST(req: Request) {
       owner && !owner.deletedAt
         ? sendOwnerNewOrderEmail(owner.email, emailData)
         : Promise.resolve(),
+      // Notificación push al dueño: suena en su móvil aunque el
+      // navegador esté cerrado.
+      sendPushToUser(store.ownerId, {
+        title: `🛍️ Pedido #${order.orderNumber} — ${formatPrice(totalCents, store.currency)}`,
+        body: `${order.customerName} · ${store.name}`,
+        url: "/dashboard/orders",
+        tag: order.id,
+      }),
     ]);
   })().catch((err) => console.error("[orders] emails fallaron:", err));
 

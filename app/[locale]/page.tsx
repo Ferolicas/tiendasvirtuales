@@ -56,6 +56,14 @@ export default async function HomePage() {
             vendi<span className="text-brand">.</span>
           </span>
           <nav className="flex items-center gap-1.5 sm:gap-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              asChild
+              className="hidden sm:inline-flex"
+            >
+              <Link href="/explorar">{t("exploreLink")}</Link>
+            </Button>
             <LocaleSwitcher />
             <ThemeToggle />
             <Button
