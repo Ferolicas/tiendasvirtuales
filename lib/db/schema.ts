@@ -9,11 +9,23 @@ import {
 } from "drizzle-orm/pg-core";
 
 export const planEnum = pgEnum("plan", ["free", "pro"]);
+// Ciclo de vida v2: pending (sin pagar) → paid (entrante) → preparing →
+// ready (en reparto / listo para recoger) → delivered. "shipped" es legado
+// de v1 y se trata como delivered en la UI.
 export const orderStatusEnum = pgEnum("order_status", [
   "pending",
   "paid",
+  "preparing",
+  "ready",
+  "delivered",
   "shipped",
   "cancelled",
+]);
+
+export const fulfillmentEnum = pgEnum("fulfillment", ["delivery", "pickup"]);
+export const paymentMethodEnum = pgEnum("payment_method", [
+  "card",
+  "in_store",
 ]);
 
 export const tokenTypeEnum = pgEnum("token_type", [
@@ -26,6 +38,10 @@ export const users = pgTable("users", {
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
   passwordHash: text("password_hash").notNull(),
+  // Perfil de la pestaña «Datos y suscripción» (reutilizable al crear tiendas)
+  phone: text("phone"),
+  taxId: text("tax_id"),
+  address: text("address"),
   emailVerified: timestamp("email_verified", { withTimezone: true }),
   // Suscripción de la plataforma: el plan vive en el usuario (Pro desbloquea
   // tiendas/productos ilimitados en toda la cuenta).
@@ -62,6 +78,17 @@ export const stores = pgTable("stores", {
   slug: text("slug").notNull().unique(),
   description: text("description"),
   logoUrl: text("logo_url"),
+  // Cabecera estilo Uber Eats: banner (predefinido por categoría o subido),
+  // horario, teléfono y dirección visibles, y recogida en tienda opcional.
+  bannerUrl: text("banner_url"),
+  bannerPreset: text("banner_preset"),
+  schedule: text("schedule"),
+  phone: text("phone"),
+  address: text("address"),
+  pickupEnabled: boolean("pickup_enabled").notNull().default(false),
+  // Media de reseñas desnormalizada para la cabecera
+  ratingSum: integer("rating_sum").notNull().default(0),
+  ratingCount: integer("rating_count").notNull().default(0),
   currency: text("currency").notNull().default("EUR"),
   shippingCents: integer("shipping_cents").notNull().default(0),
   // Dominio propio (plan Pro): apunta por DNS al VPS y Caddy emite el SSL
@@ -85,16 +112,34 @@ export const stores = pgTable("stores", {
     .defaultNow(),
 });
 
-export const products = pgTable("products", {
+export const categories = pgTable("categories", {
   id: uuid("id").primaryKey().defaultRandom(),
   storeId: uuid("store_id")
     .notNull()
     .references(() => stores.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
+  position: integer("position").notNull().default(0),
+});
+
+export const products = pgTable("products", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  storeId: uuid("store_id")
+    .notNull()
+    .references(() => stores.id, { onDelete: "cascade" }),
+  categoryId: uuid("category_id").references(() => categories.id, {
+    onDelete: "set null",
+  }),
+  name: text("name").notNull(),
   description: text("description"),
+  // priceCents es SIEMPRE lo que cobra Stripe; compareAtCents solo pinta
+  // el precio tachado y el badge de descuento.
   priceCents: integer("price_cents").notNull(),
+  compareAtCents: integer("compare_at_cents"),
   imageUrl: text("image_url"),
   stock: integer("stock").notNull().default(0),
+  unlimitedStock: boolean("unlimited_stock").notNull().default(true),
+  recommended: boolean("recommended").notNull().default(false),
+  salesCount: integer("sales_count").notNull().default(0),
   active: boolean("active").notNull().default(true),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
@@ -103,14 +148,44 @@ export const products = pgTable("products", {
 
 export const orders = pgTable("orders", {
   id: uuid("id").primaryKey().defaultRandom(),
+  // Número secuencial único para contabilidad e inventario.
+  orderNumber: integer("order_number")
+    .notNull()
+    .generatedAlwaysAsIdentity(),
   storeId: uuid("store_id")
     .notNull()
     .references(() => stores.id, { onDelete: "cascade" }),
   customerName: text("customer_name").notNull(),
   customerEmail: text("customer_email").notNull(),
+  customerPhone: text("customer_phone"),
+  fulfillment: fulfillmentEnum("fulfillment").notNull().default("delivery"),
+  deliveryAddress: text("delivery_address"),
+  paymentMethod: paymentMethodEnum("payment_method").notNull().default("card"),
   totalCents: integer("total_cents").notNull(),
   status: orderStatusEnum("status").notNull().default("pending"),
+  cancelReason: text("cancel_reason"),
   stripePaymentIntentId: text("stripe_payment_intent_id"),
+  // Timestamps por fase: contadores de la comanda y métricas de cocina.
+  acceptedAt: timestamp("accepted_at", { withTimezone: true }),
+  readyAt: timestamp("ready_at", { withTimezone: true }),
+  deliveredAt: timestamp("delivered_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export const reviews = pgTable("reviews", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  storeId: uuid("store_id")
+    .notNull()
+    .references(() => stores.id, { onDelete: "cascade" }),
+  orderId: uuid("order_id")
+    .notNull()
+    .unique()
+    .references(() => orders.id, { onDelete: "cascade" }),
+  rating: integer("rating").notNull(),
+  comment: text("comment"),
+  customerName: text("customer_name").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
