@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { products, stores } from "@/lib/db/schema";
 import { rateLimit, clientIdentifier } from "@/lib/rate-limit";
+import { imageUrlSchema } from "@/lib/validations/product";
 
 const updateProductSchema = z.object({
   name: z.string().min(2).max(120).optional(),
@@ -11,6 +12,7 @@ const updateProductSchema = z.object({
   priceCents: z.number().int().min(1).max(100_000_000).optional(),
   stock: z.number().int().min(0).max(1_000_000).optional(),
   active: z.boolean().optional(),
+  imageUrl: imageUrlSchema.nullable().optional(),
 });
 
 async function authorize(storeId: string, productId: string, userId: string) {

@@ -132,6 +132,7 @@ export default async function StoreAdminPage({
                   priceCents: product.priceCents,
                   stock: product.stock,
                   active: product.active,
+                  imageUrl: product.imageUrl,
                 }))}
               />
             </CardContent>

@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
@@ -88,11 +88,29 @@ export async function PATCH(
     return Response.json({ error: "invalid_transition" }, { status: 409 });
   }
 
-  const [updated] = await db
-    .update(orders)
-    .set({ status: result.data.status })
-    .where(eq(orders.id, orderId))
-    .returning();
+  const [updated] = await db.transaction(async (tx) => {
+    // Al cancelar, el stock de las líneas vuelve al catálogo.
+    if (result.data.status === "cancelled") {
+      const lines = await tx
+        .select({
+          productId: orderItems.productId,
+          quantity: orderItems.quantity,
+        })
+        .from(orderItems)
+        .where(eq(orderItems.orderId, orderId));
+      for (const line of lines) {
+        await tx
+          .update(products)
+          .set({ stock: sql`${products.stock} + ${line.quantity}` })
+          .where(eq(products.id, line.productId));
+      }
+    }
+    return tx
+      .update(orders)
+      .set({ status: result.data.status })
+      .where(eq(orders.id, orderId))
+      .returning();
+  });
 
   emitToStore(updated.storeId, "order:update", {
     id: updated.id,

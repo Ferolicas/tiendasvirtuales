@@ -1,4 +1,10 @@
-import { and, eq, inArray, isNull } from "drizzle-orm";
+import { and, eq, gte, inArray, isNull, sql } from "drizzle-orm";
+
+class OutOfStockError extends Error {
+  constructor(public productId: string) {
+    super("out_of_stock");
+  }
+}
 import { db } from "@/lib/db";
 import { orders, orderItems, products, stores, users } from "@/lib/db/schema";
 import { createOrderSchema } from "@/lib/validations/order";
@@ -69,21 +75,50 @@ export async function POST(req: Request) {
   );
   const totalCents = itemsTotal + store.shippingCents;
 
-  const order = await db.transaction(async (tx) => {
-    const [created] = await tx
-      .insert(orders)
-      .values({ storeId, customerName, customerEmail, totalCents })
-      .returning();
-    await tx.insert(orderItems).values(
-      items.map((i) => ({
-        orderId: created.id,
-        productId: i.productId,
-        quantity: i.quantity,
-        unitPriceCents: productById.get(i.productId)?.priceCents ?? 0,
-      }))
-    );
-    return created;
-  });
+  let order;
+  try {
+    order = await db.transaction(async (tx) => {
+      // Stock forzado: se descuenta de forma atómica; si no alcanza para
+      // alguna línea, el pedido entero se aborta.
+      for (const item of items) {
+        const updated = await tx
+          .update(products)
+          .set({ stock: sql`${products.stock} - ${item.quantity}` })
+          .where(
+            and(
+              eq(products.id, item.productId),
+              gte(products.stock, item.quantity)
+            )
+          )
+          .returning({ id: products.id });
+        if (updated.length === 0) {
+          throw new OutOfStockError(item.productId);
+        }
+      }
+
+      const [created] = await tx
+        .insert(orders)
+        .values({ storeId, customerName, customerEmail, totalCents })
+        .returning();
+      await tx.insert(orderItems).values(
+        items.map((i) => ({
+          orderId: created.id,
+          productId: i.productId,
+          quantity: i.quantity,
+          unitPriceCents: productById.get(i.productId)?.priceCents ?? 0,
+        }))
+      );
+      return created;
+    });
+  } catch (err) {
+    if (err instanceof OutOfStockError) {
+      return Response.json(
+        { error: "out_of_stock", productId: err.productId },
+        { status: 409 }
+      );
+    }
+    throw err;
+  }
 
   emitToStore(storeId, "order:new", {
     id: order.id,

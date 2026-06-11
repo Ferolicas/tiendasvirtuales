@@ -45,3 +45,36 @@ export async function createUploadUrl(
 export function publicUrl(key: string): string {
   return `${process.env.R2_PUBLIC_URL}/${key}`;
 }
+
+// ── Almacenamiento local (fallback sin R2) ────────────────────────────────
+// Las imágenes viven en ./uploads del VPS y se sirven por /api/files/<key>.
+// Cuando se configuren las claves R2, saveImage cambia de destino sin tocar
+// nada más (las URLs guardadas en DB son absolutas en cada caso).
+import { mkdir, writeFile } from "node:fs/promises";
+import path from "node:path";
+
+export const UPLOAD_DIR = path.join(process.cwd(), "uploads");
+
+export async function saveImage(
+  key: string,
+  buffer: Buffer,
+  contentType: string
+): Promise<string> {
+  if (r2Configured()) {
+    await getClient().send(
+      new PutObjectCommand({
+        Bucket: process.env.R2_BUCKET,
+        Key: key,
+        Body: buffer,
+        ContentType: contentType,
+      })
+    );
+    return publicUrl(key);
+  }
+
+  const target = path.join(UPLOAD_DIR, key);
+  // El key lo genera el servidor (uuid + extensión fija): sin path traversal.
+  await mkdir(path.dirname(target), { recursive: true });
+  await writeFile(target, buffer);
+  return `/api/files/${key}`;
+}

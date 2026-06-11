@@ -36,6 +36,7 @@ interface PanelProduct {
   priceCents: number;
   stock: number;
   active: boolean;
+  imageUrl: string | null;
   optimistic?: boolean;
 }
 
@@ -59,12 +60,32 @@ export function ProductsPanel({
   const [editing, setEditing] = useState<PanelProduct | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [creating, setCreating] = useState(false);
+
+  // Sube la foto al servidor (sharp → WebP) y devuelve su URL pública.
+  async function uploadPhoto(file: File | null): Promise<string | undefined> {
+    if (!file || file.size === 0) return undefined;
+    const body = new FormData();
+    body.append("file", file);
+    body.append("storeId", storeId);
+    const res = await fetch("/api/uploads", { method: "POST", body });
+    if (!res.ok) {
+      toast.error(t("uploadFailed"));
+      return undefined;
+    }
+    const data = await res.json();
+    return data.url as string;
+  }
 
   async function onCreate(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
     const formElement = event.currentTarget;
     const form = new FormData(formElement);
+
+    setCreating(true);
+    const imageUrl = await uploadPhoto(form.get("photo") as File | null);
+    setCreating(false);
 
     const name = String(form.get("name") ?? "");
     const priceCents = Math.round(Number(form.get("price")) * 100);
@@ -73,6 +94,7 @@ export function ProductsPanel({
       description: form.get("description") || undefined,
       priceCents,
       stock: Number(form.get("stock") ?? 0),
+      imageUrl,
     };
 
     const tempId = `optimistic-${Date.now()}`;
@@ -84,6 +106,7 @@ export function ProductsPanel({
         priceCents,
         stock: payload.stock,
         active: true,
+        imageUrl: imageUrl ?? null,
         optimistic: true,
       },
       ...prev,
@@ -119,11 +142,13 @@ export function ProductsPanel({
     if (!editing) return;
     setSaving(true);
     const form = new FormData(event.currentTarget);
+    const newPhoto = await uploadPhoto(form.get("photo") as File | null);
     const payload = {
       name: String(form.get("name") ?? ""),
       description: String(form.get("description") ?? "") || null,
       priceCents: Math.round(Number(form.get("price")) * 100),
       stock: Number(form.get("stock") ?? 0),
+      ...(newPhoto ? { imageUrl: newPhoto } : {}),
     };
 
     const res = await fetch(
@@ -210,6 +235,15 @@ export function ProductsPanel({
           <Input id="product-name" name="name" minLength={2} required />
         </div>
         <div className="grid gap-2">
+          <Label htmlFor="product-photo">{t("photoLabel")}</Label>
+          <Input
+            id="product-photo"
+            name="photo"
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/avif"
+          />
+        </div>
+        <div className="grid gap-2">
           <Label htmlFor="product-description">
             {t("productDescription")}
           </Label>
@@ -243,7 +277,8 @@ export function ProductsPanel({
           </div>
         </div>
         {error ? <p className="text-sm text-destructive">{error}</p> : null}
-        <Button type="submit" className="rounded-full">
+        <Button type="submit" disabled={creating} className="rounded-full">
+          {creating ? <Loader2 className="size-4 animate-spin" /> : null}
           {t("addProductButton")}
         </Button>
       </form>
@@ -270,6 +305,18 @@ export function ProductsPanel({
               }`}
             >
               <span className="flex items-center gap-2">
+                {product.imageUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={product.imageUrl}
+                    alt=""
+                    className="size-8 rounded-lg object-cover"
+                  />
+                ) : (
+                  <span className="flex size-8 items-center justify-center rounded-lg bg-accent">
+                    <PackageOpen className="size-3.5 text-accent-foreground/60" />
+                  </span>
+                )}
                 {product.name}
                 {!product.active ? (
                   <Badge variant="secondary" className="rounded-full text-[10px]">
@@ -300,6 +347,27 @@ export function ProductsPanel({
                 <DrawerTitle>{t("editProduct")}</DrawerTitle>
               </DrawerHeader>
               <form method="post" onSubmit={onEdit} className="grid gap-4 px-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-photo">
+                    {editing.imageUrl ? t("photoChange") : t("photoLabel")}
+                  </Label>
+                  <div className="flex items-center gap-3">
+                    {editing.imageUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={editing.imageUrl}
+                        alt=""
+                        className="size-14 rounded-xl object-cover"
+                      />
+                    ) : null}
+                    <Input
+                      id="edit-photo"
+                      name="photo"
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/avif"
+                    />
+                  </div>
+                </div>
                 <div className="grid gap-2">
                   <Label htmlFor="edit-name">{t("productName")}</Label>
                   <Input
