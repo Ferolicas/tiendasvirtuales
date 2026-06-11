@@ -165,6 +165,35 @@
     "legalAddressLabel": "Address",
     "contactEmailLabel": "Contact email"
   },
+  "status": {
+    "pending": "Pending",
+    "paid": "Paid",
+    "shipped": "Shipped",
+    "cancelled": "Cancelled"
+  },
+  "toasts": {
+    "storeCreated": "Store created. Let's sell!",
+    "productAdded": "Product added to the catalog",
+    "productFailed": "Couldn't save the product",
+    "settingsSaved": "Settings saved",
+    "settingsFailed": "Couldn't save the settings",
+    "newOrder": "New order from {name} — {total}"
+  },
+  "empty": {
+    "ordersTitle": "No orders yet",
+    "ordersHint": "Share your store link and orders will show up here instantly.",
+    "productsTitle": "Your catalog is empty",
+    "productsHint": "Add your first product with the form above.",
+    "storesTitle": "Create your first store",
+    "storesHint": "In a minute it has a name, its own link and a catalog ready to share.",
+    "catalogTitle": "Coming soon",
+    "catalogHint": "This store is still preparing its catalog."
+  },
+  "celebration": {
+    "proTitle": "Welcome to Pro!",
+    "proText": "Unlimited stores and products, your own domain and only a 1% fee. Thank you for trusting Vendi.",
+    "proCta": "Keep selling"
+  },
   "store": {
     "noProducts": "This store doesn't have products yet.",
     "buy": "Buy",

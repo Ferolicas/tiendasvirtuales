@@ -165,6 +165,35 @@
     "legalAddressLabel": "Dirección",
     "contactEmailLabel": "Email de contacto"
   },
+  "status": {
+    "pending": "Pendiente",
+    "paid": "Pagado",
+    "shipped": "Enviado",
+    "cancelled": "Cancelado"
+  },
+  "toasts": {
+    "storeCreated": "Tienda creada. ¡A vender!",
+    "productAdded": "Producto añadido al catálogo",
+    "productFailed": "No se pudo guardar el producto",
+    "settingsSaved": "Ajustes guardados",
+    "settingsFailed": "No se pudieron guardar los ajustes",
+    "newOrder": "Nuevo pedido de {name} — {total}"
+  },
+  "empty": {
+    "ordersTitle": "Sin pedidos todavía",
+    "ordersHint": "Comparte el enlace de tu tienda y los pedidos aparecerán aquí al instante.",
+    "productsTitle": "Tu catálogo está vacío",
+    "productsHint": "Añade tu primer producto con el formulario de arriba.",
+    "storesTitle": "Crea tu primera tienda",
+    "storesHint": "En un minuto tiene nombre, enlace propio y catálogo listo para compartir.",
+    "catalogTitle": "Muy pronto",
+    "catalogHint": "Esta tienda aún está preparando su catálogo."
+  },
+  "celebration": {
+    "proTitle": "¡Bienvenido a Pro!",
+    "proText": "Tiendas y productos ilimitados, tu propio dominio y solo 1 % de comisión. Gracias por confiar en Vendi.",
+    "proCta": "Seguir vendiendo"
+  },
   "store": {
     "noProducts": "Esta tienda todavía no tiene productos.",
     "buy": "Comprar",

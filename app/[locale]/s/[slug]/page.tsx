@@ -13,7 +13,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Store as StoreIcon } from "lucide-react";
 import { BuyForm } from "@/components/shared/buy-form";
+import { EmptyState } from "@/components/shared/empty-state";
 import { formatPrice } from "@/lib/format";
 
 export async function generateMetadata({
@@ -44,6 +46,7 @@ export default async function PublicStorePage({
   const { slug } = await params;
   const { paid } = await searchParams;
   const t = await getTranslations("store");
+  const tEmpty = await getTranslations("empty");
 
   const [store] = await db
     .select()
@@ -88,9 +91,12 @@ export default async function PublicStorePage({
           </p>
         ) : null}
         {catalog.length === 0 ? (
-          <p className="text-center text-sm text-muted-foreground">
-            {t("noProducts")}
-          </p>
+          <EmptyState
+            icon={StoreIcon}
+            title={tEmpty("catalogTitle")}
+            hint={tEmpty("catalogHint")}
+            className="mx-auto max-w-md"
+          />
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {catalog.map((product) => (

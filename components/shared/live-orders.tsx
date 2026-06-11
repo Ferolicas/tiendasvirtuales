@@ -1,9 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { io, type Socket } from "socket.io-client";
+import { Inbox } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
+import { EmptyState } from "@/components/shared/empty-state";
+import { StatusBadge } from "@/components/shared/status-badge";
 import { VendiLiveDot } from "@/components/shared/vendi-dot";
 import { formatPrice } from "@/lib/format";
 
@@ -25,8 +28,12 @@ export function LiveOrders({
   initialOrders: LiveOrder[];
 }) {
   const t = useTranslations("dashboard");
+  const tToast = useTranslations("toasts");
+  const tEmpty = useTranslations("empty");
   const [orders, setOrders] = useState<LiveOrder[]>(initialOrders);
   const [connected, setConnected] = useState(false);
+  // ids llegados en vivo: se destacan con un flash de acento al entrar
+  const liveIds = useRef(new Set<string>());
 
   useEffect(() => {
     const socket: Socket = io({ transports: ["websocket", "polling"] });
@@ -37,13 +44,20 @@ export function LiveOrders({
     });
     socket.on("disconnect", () => setConnected(false));
     socket.on("order:new", (order: LiveOrder) => {
+      liveIds.current.add(order.id);
       setOrders((prev) => [order, ...prev].slice(0, 20));
+      toast.success(
+        tToast("newOrder", {
+          name: order.customerName,
+          total: formatPrice(order.totalCents, currency),
+        })
+      );
     });
 
     return () => {
       socket.disconnect();
     };
-  }, [storeId]);
+  }, [storeId, currency, tToast]);
 
   return (
     <div className="grid gap-3">
@@ -56,12 +70,20 @@ export function LiveOrders({
         {connected ? t("liveConnected") : t("liveConnecting")}
       </div>
       {orders.length === 0 ? (
-        <p className="text-sm text-muted-foreground">{t("noOrders")}</p>
+        <EmptyState
+          icon={Inbox}
+          title={tEmpty("ordersTitle")}
+          hint={tEmpty("ordersHint")}
+        />
       ) : (
         orders.map((order) => (
           <div
             key={order.id}
-            className="animate-fade-in flex items-center justify-between border-b pb-2 text-sm last:border-0"
+            className={`flex items-center justify-between border-b pb-2 text-sm last:border-0 ${
+              liveIds.current.has(order.id)
+                ? "animate-fade-up rounded-xl bg-accent/60 px-2 py-1.5"
+                : ""
+            }`}
           >
             <div>
               <p className="font-medium">{order.customerName}</p>
@@ -73,9 +95,7 @@ export function LiveOrders({
               <span className="font-semibold">
                 {formatPrice(order.totalCents, currency)}
               </span>
-              <Badge variant="secondary" className="rounded-full">
-                {order.status}
-              </Badge>
+              <StatusBadge status={order.status} />
             </div>
           </div>
         ))

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -105,6 +106,9 @@ export function BuyForm({
         disabled={status === "sending"}
         className="rounded-full"
       >
+        {status === "sending" ? (
+          <Loader2 className="size-3.5 animate-spin" />
+        ) : null}
         {status === "sending" ? t("sending") : t("confirmOrder")}
       </Button>
     </form>

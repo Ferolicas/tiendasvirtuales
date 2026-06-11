@@ -3,12 +3,15 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 export function CreateStoreForm() {
   const t = useTranslations("dashboard");
+  const tToast = useTranslations("toasts");
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -37,6 +40,7 @@ export function CreateStoreForm() {
       );
       return;
     }
+    toast.success(tToast("storeCreated"));
     router.refresh();
   }
 
@@ -78,6 +82,7 @@ export function CreateStoreForm() {
       </div>
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
       <Button type="submit" disabled={loading} className="rounded-full">
+        {loading ? <Loader2 className="size-4 animate-spin" /> : null}
         {loading ? t("creating") : t("createStoreButton")}
       </Button>
     </form>

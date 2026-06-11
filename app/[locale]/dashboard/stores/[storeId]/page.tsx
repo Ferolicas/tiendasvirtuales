@@ -14,14 +14,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { AddProductForm } from "@/components/shared/add-product-form";
 import { LiveOrders } from "@/components/shared/live-orders";
+import { ProductsPanel } from "@/components/shared/products-panel";
 import {
   ConnectButton,
   LegalForm,
   ShippingForm,
 } from "@/components/shared/store-settings";
-import { formatPrice } from "@/lib/format";
 
 export default async function StoreAdminPage({
   params,
@@ -121,7 +120,15 @@ export default async function StoreAdminPage({
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <AddProductForm storeId={store.id} />
+              <ProductsPanel
+                storeId={store.id}
+                currency={store.currency}
+                initialProducts={productList.map((product) => ({
+                  id: product.id,
+                  name: product.name,
+                  priceCents: product.priceCents,
+                }))}
+              />
             </CardContent>
           </Card>
 
@@ -175,32 +182,6 @@ export default async function StoreAdminPage({
             </CardContent>
           </Card>
 
-          <Card className="rounded-3xl shadow-soft">
-            <CardHeader>
-              <CardTitle className="tracking-tight">
-                {t("products")} ({productList.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="grid gap-3">
-              {productList.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  {t("noProducts")}
-                </p>
-              ) : (
-                productList.map((product) => (
-                  <div
-                    key={product.id}
-                    className="flex items-center justify-between border-b pb-2 text-sm last:border-0"
-                  >
-                    <span>{product.name}</span>
-                    <span className="font-medium">
-                      {formatPrice(product.priceCents, store.currency)}
-                    </span>
-                  </div>
-                ))
-              )}
-            </CardContent>
-          </Card>
         </div>
       </div>
 

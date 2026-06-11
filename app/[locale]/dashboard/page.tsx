@@ -15,9 +15,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Store } from "lucide-react";
 import { CreateStoreForm } from "@/components/shared/create-store-form";
 import { BillingCard } from "@/components/shared/billing-card";
 import { DangerZone } from "@/components/shared/danger-zone";
+import { EmptyState } from "@/components/shared/empty-state";
 
 export async function generateMetadata() {
   const t = await getTranslations("dashboard");
@@ -28,6 +30,7 @@ export default async function DashboardPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
   const t = await getTranslations("dashboard");
+  const tEmpty = await getTranslations("empty");
 
   const [own, [me]] = await Promise.all([
     db
@@ -90,7 +93,12 @@ export default async function DashboardPage() {
           ))}
         </div>
       ) : (
-        <p className="text-sm text-muted-foreground">{t("noStores")}</p>
+        <EmptyState
+          icon={Store}
+          title={tEmpty("storesTitle")}
+          hint={tEmpty("storesHint")}
+          className="max-w-md"
+        />
       )}
 
       <Card className="max-w-md rounded-3xl shadow-soft">

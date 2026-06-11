@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,14 +17,13 @@ export function ShippingForm({
   initialShippingCents: number;
 }) {
   const t = useTranslations("dashboard");
+  const tToast = useTranslations("toasts");
   const router = useRouter();
-  const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">(
-    "idle"
-  );
+  const [saving, setSaving] = useState(false);
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setStatus("saving");
+    setSaving(true);
     const form = new FormData(event.currentTarget);
     const res = await fetch(`/api/stores/${storeId}`, {
       method: "PATCH",
@@ -31,8 +32,13 @@ export function ShippingForm({
         shippingCents: Math.round(Number(form.get("shipping")) * 100),
       }),
     });
-    setStatus(res.ok ? "saved" : "error");
-    if (res.ok) router.refresh();
+    setSaving(false);
+    if (res.ok) {
+      toast.success(tToast("settingsSaved"));
+      router.refresh();
+    } else {
+      toast.error(tToast("settingsFailed"));
+    }
   }
 
   return (
@@ -49,24 +55,15 @@ export function ShippingForm({
           required
         />
       </div>
-      <div className="flex items-center gap-3">
-        <Button
-          type="submit"
-          size="sm"
-          disabled={status === "saving"}
-          className="rounded-full"
-        >
-          {t("saveButton")}
-        </Button>
-        {status === "saved" ? (
-          <span className="animate-fade-in text-sm font-medium text-green-600">
-            {t("savedOk")}
-          </span>
-        ) : null}
-        {status === "error" ? (
-          <span className="text-sm text-destructive">{t("saveError")}</span>
-        ) : null}
-      </div>
+      <Button
+        type="submit"
+        size="sm"
+        disabled={saving}
+        className="w-fit rounded-full"
+      >
+        {saving ? <Loader2 className="size-3.5 animate-spin" /> : null}
+        {t("saveButton")}
+      </Button>
     </form>
   );
 }
@@ -84,14 +81,13 @@ export function LegalForm({
   };
 }) {
   const t = useTranslations("dashboard");
+  const tToast = useTranslations("toasts");
   const router = useRouter();
-  const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">(
-    "idle"
-  );
+  const [saving, setSaving] = useState(false);
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setStatus("saving");
+    setSaving(true);
     const form = new FormData(event.currentTarget);
     const res = await fetch(`/api/stores/${storeId}`, {
       method: "PATCH",
@@ -103,8 +99,13 @@ export function LegalForm({
         contactEmail: form.get("contactEmail") || undefined,
       }),
     });
-    setStatus(res.ok ? "saved" : "error");
-    if (res.ok) router.refresh();
+    setSaving(false);
+    if (res.ok) {
+      toast.success(tToast("settingsSaved"));
+      router.refresh();
+    } else {
+      toast.error(tToast("settingsFailed"));
+    }
   }
 
   return (
@@ -147,24 +148,15 @@ export function LegalForm({
           defaultValue={initial.legalAddress ?? ""}
         />
       </div>
-      <div className="flex items-center gap-3">
-        <Button
-          type="submit"
-          size="sm"
-          disabled={status === "saving"}
-          className="rounded-full"
-        >
-          {t("saveButton")}
-        </Button>
-        {status === "saved" ? (
-          <span className="animate-fade-in text-sm font-medium text-green-600">
-            {t("savedOk")}
-          </span>
-        ) : null}
-        {status === "error" ? (
-          <span className="text-sm text-destructive">{t("saveError")}</span>
-        ) : null}
-      </div>
+      <Button
+        type="submit"
+        size="sm"
+        disabled={saving}
+        className="w-fit rounded-full"
+      >
+        {saving ? <Loader2 className="size-3.5 animate-spin" /> : null}
+        {t("saveButton")}
+      </Button>
     </form>
   );
 }
