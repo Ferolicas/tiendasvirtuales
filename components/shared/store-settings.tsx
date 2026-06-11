@@ -9,14 +9,18 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
 import { VendiLiveDot } from "@/components/shared/vendi-dot";
 
 const VPS_IP = "87.106.236.248";
-// Plantilla del enlace de compra (afiliado configurable): {domain} se
-// sustituye por lo que el dueño haya escrito.
-const BUY_URL_TEMPLATE =
-  process.env.NEXT_PUBLIC_BUY_DOMAIN_URL ??
-  "https://www.namecheap.com/domains/registration/results/?domain={domain}";
+// Compra de dominios: directo al buscador público de Cloudflare Registrar
+// (precio de coste). Sin programas de afiliados de por medio.
+const CF_DOMAINS_URL = "https://domains.cloudflare.com/";
 
 export function LogoForm({
   storeId,
@@ -109,11 +113,11 @@ export function DomainCard({
   const [verified, setVerified] = useState(initialVerified);
   const [input, setInput] = useState(initialDomain ?? "");
   const [busy, setBusy] = useState(false);
+  const [guideOpen, setGuideOpen] = useState(false);
 
-  const buyUrl = BUY_URL_TEMPLATE.replace(
-    "{domain}",
-    encodeURIComponent(input || "")
-  );
+  const buyUrl = input
+    ? `${CF_DOMAINS_URL}?domain=${encodeURIComponent(input)}`
+    : CF_DOMAINS_URL;
 
   async function connect(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -251,16 +255,72 @@ export function DomainCard({
           {busy ? <Loader2 className="size-3.5 animate-spin" /> : null}
           {t("domainSave")}
         </Button>
-        <Button size="sm" variant="outline" asChild className="rounded-full">
-          <a href={buyUrl} target="_blank" rel="noopener noreferrer">
-            <Globe className="size-3.5" />
-            {t("domainBuy")}
-          </a>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          onClick={() => setGuideOpen(true)}
+          className="rounded-full"
+        >
+          <Globe className="size-3.5" />
+          {t("domainBuy")}
         </Button>
       </div>
       <p className="text-xs font-light text-muted-foreground">
         {t("domainBuyHint")}
       </p>
+
+      {/* Guía de compra en Cloudflare (modal de 3 pasos) */}
+      <Drawer open={guideOpen} onOpenChange={setGuideOpen}>
+        <DrawerContent>
+          <div className="mx-auto w-full max-w-md pb-8">
+            <DrawerHeader>
+              <DrawerTitle className="tracking-tight">
+                {t("buyGuideTitle")}
+              </DrawerTitle>
+            </DrawerHeader>
+            <div className="grid gap-4 px-4">
+              <div className="grid gap-2 rounded-2xl bg-secondary/60 p-4 text-sm">
+                <p className="flex gap-2 font-medium">
+                  <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-brand text-[11px] font-extrabold text-brand-foreground">
+                    1
+                  </span>
+                  {t("buyGuideStep1")}
+                </p>
+                <Button size="sm" asChild className="w-fit rounded-full">
+                  <a href={buyUrl} target="_blank" rel="noopener noreferrer">
+                    <Globe className="size-3.5" />
+                    {t("buyGuideCfButton")}
+                  </a>
+                </Button>
+              </div>
+              <div className="grid gap-1.5 rounded-2xl bg-secondary/60 p-4 text-sm">
+                <p className="flex gap-2 font-medium">
+                  <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-brand text-[11px] font-extrabold text-brand-foreground">
+                    2
+                  </span>
+                  {t("buyGuideStep2")}
+                </p>
+                <p className="font-mono text-xs">
+                  {t("domainRecordA", { ip: VPS_IP })}
+                </p>
+                <p className="font-mono text-xs">{t("domainRecordCname")}</p>
+              </div>
+              <div className="rounded-2xl bg-secondary/60 p-4 text-sm">
+                <p className="flex gap-2 font-medium">
+                  <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-brand text-[11px] font-extrabold text-brand-foreground">
+                    3
+                  </span>
+                  {t("buyGuideStep3")}
+                </p>
+              </div>
+              <p className="text-xs font-light text-muted-foreground">
+                {t("buyGuideNote")}
+              </p>
+            </div>
+          </div>
+        </DrawerContent>
+      </Drawer>
     </form>
   );
 }
