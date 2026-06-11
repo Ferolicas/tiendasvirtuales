@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { io, type Socket } from "socket.io-client";
 import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
+import { VendiLiveDot } from "@/components/shared/vendi-dot";
 import { formatPrice } from "@/lib/format";
 
 export interface LiveOrder {
@@ -47,11 +48,11 @@ export function LiveOrders({
   return (
     <div className="grid gap-3">
       <div className="flex items-center gap-2 text-xs text-muted-foreground">
-        <span
-          className={`inline-block size-2 rounded-full ${
-            connected ? "animate-pulse bg-green-500" : "bg-zinc-300"
-          }`}
-        />
+        {connected ? (
+          <VendiLiveDot />
+        ) : (
+          <span className="inline-block size-2 rounded-full bg-muted-foreground/30" />
+        )}
         {connected ? t("liveConnected") : t("liveConnecting")}
       </div>
       {orders.length === 0 ? (

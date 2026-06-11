@@ -1,7 +1,9 @@
+import { VendiLoader } from "@/components/shared/vendi-dot";
+
 export default function DashboardLoading() {
   return (
     <div className="flex items-center justify-center py-24">
-      <div className="size-6 animate-spin rounded-full border-2 border-muted-foreground/30 border-t-foreground" />
+      <VendiLoader />
     </div>
   );
 }

@@ -13,7 +13,8 @@
     "loading": "Cargando…",
     "error": "Algo ha salido mal",
     "errorDescription": "Ha ocurrido un error inesperado. Inténtalo de nuevo.",
-    "retry": "Reintentar"
+    "retry": "Reintentar",
+    "toggleTheme": "Cambiar tema"
   },
   "landing": {
     "heroTitle": "Tu tienda online, lista en minutos.",

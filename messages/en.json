@@ -13,7 +13,8 @@
     "loading": "Loading…",
     "error": "Something went wrong",
     "errorDescription": "An unexpected error occurred. Please try again.",
-    "retry": "Retry"
+    "retry": "Retry",
+    "toggleTheme": "Toggle theme"
   },
   "landing": {
     "heroTitle": "Your online store, live in minutes.",

@@ -7,9 +7,11 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
+  /* OJO: el init de shadcn dejó esto circular (--font-sans: var(--font-sans))
+     y toda la app caía al serif del sistema. Debe apuntar a la fuente real. */
+  --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-heading: var(--font-geist-sans);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -63,7 +65,7 @@
   --secondary: oklch(0.965 0.006 80);
   --secondary-foreground: oklch(0.205 0.012 50);
   --muted: oklch(0.965 0.006 80);
-  --muted-foreground: oklch(0.5 0.015 60);
+  --muted-foreground: oklch(0.45 0.015 60);
   --accent: oklch(0.955 0.02 30);
   --accent-foreground: oklch(0.4 0.12 25);
   --destructive: oklch(0.577 0.245 27.325);
@@ -89,26 +91,27 @@
 }
 
 .dark {
-  --brand: oklch(0.68 0.18 25);
-  --brand-foreground: oklch(0.16 0.01 50);
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
+  /* Noche cálida: mismos matices tostados que el modo claro, coral más vivo */
+  --brand: oklch(0.7 0.17 25);
+  --brand-foreground: oklch(0.17 0.008 60);
+  --background: oklch(0.16 0.008 60);
+  --foreground: oklch(0.955 0.005 80);
+  --card: oklch(0.205 0.01 60);
+  --card-foreground: oklch(0.955 0.005 80);
+  --popover: oklch(0.205 0.01 60);
+  --popover-foreground: oklch(0.955 0.005 80);
+  --primary: oklch(0.945 0.006 80);
+  --primary-foreground: oklch(0.18 0.008 60);
+  --secondary: oklch(0.245 0.01 60);
+  --secondary-foreground: oklch(0.955 0.005 80);
+  --muted: oklch(0.245 0.01 60);
+  --muted-foreground: oklch(0.72 0.012 70);
+  --accent: oklch(0.27 0.035 30);
+  --accent-foreground: oklch(0.84 0.09 27);
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
+  --border: oklch(1 0 0 / 12%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  --ring: oklch(0.7 0.17 25);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -157,6 +160,46 @@
   }
 }
 
+/* El punto vendi — elemento firma de la marca */
+@keyframes vendi-dot-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.35);
+    opacity: 0.65;
+  }
+}
+
+@keyframes vendi-dot-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  45% {
+    transform: translateY(-0.5em);
+  }
+  65% {
+    transform: translateY(0.08em) scale(1.1, 0.9);
+  }
+  80% {
+    transform: translateY(0);
+  }
+}
+
+@keyframes vendi-dot-ring {
+  from {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  to {
+    transform: scale(2.6);
+    opacity: 0;
+  }
+}
+
 @layer utilities {
   .animate-fade-up {
     animation: vendi-fade-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
@@ -176,11 +219,30 @@
   .shadow-soft {
     box-shadow: 0 10px 30px -12px oklch(0.18 0.012 50 / 0.12);
   }
+  .hero-glow {
+    background: radial-gradient(
+      60% 60% at 50% 0%,
+      var(--accent) 0%,
+      transparent 70%
+    );
+  }
+  .vendi-dot-pulse {
+    animation: vendi-dot-pulse 1.8s ease-in-out infinite;
+  }
+  .vendi-dot-bounce {
+    animation: vendi-dot-bounce 1.1s cubic-bezier(0.34, 1.3, 0.64, 1) infinite;
+  }
+  .vendi-dot-ring {
+    animation: vendi-dot-ring 1.8s ease-out infinite;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .animate-fade-up,
-  .animate-fade-in {
+  .animate-fade-in,
+  .vendi-dot-pulse,
+  .vendi-dot-bounce,
+  .vendi-dot-ring {
     animation: none;
   }
   .hover-lift,
