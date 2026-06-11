@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { orders, reviews, stores } from "@/lib/db/schema";
+import { verticalFor } from "@/lib/verticals";
 
 // Estado público de un pedido para la barra de seguimiento del escaparate.
 // El uuid (solo lo conoce el comprador) es la credencial, igual que /o/[id].
@@ -23,6 +24,7 @@ export async function GET(
       customerName: orders.customerName,
       storeName: stores.name,
       storePhone: stores.phone,
+      storeCategory: stores.storeCategory,
     })
     .from(orders)
     .innerJoin(stores, eq(orders.storeId, stores.id))
@@ -36,5 +38,9 @@ export async function GET(
     .where(eq(reviews.orderId, orderId))
     .limit(1);
 
-  return Response.json({ ...row, hasReview: Boolean(review) });
+  return Response.json({
+    ...row,
+    vertical: verticalFor(row.storeCategory),
+    hasReview: Boolean(review),
+  });
 }

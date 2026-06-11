@@ -45,6 +45,8 @@ export default async function StoresPage() {
           id: store.id,
           name: store.name,
           slug: store.slug,
+          storeCategory: store.storeCategory,
+          chargesEnabled: store.chargesEnabled,
           description: store.description,
           logoUrl: store.logoUrl,
           bannerUrl: store.bannerUrl,

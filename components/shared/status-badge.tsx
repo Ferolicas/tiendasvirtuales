@@ -1,4 +1,5 @@
 import {
+  Archive,
   CheckCheck,
   CheckCircle2,
   ChefHat,
@@ -42,6 +43,10 @@ const STATUS_STYLES = {
     icon: CheckCheck,
     className:
       "bg-emerald-600/12 text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-300",
+  },
+  archived: {
+    icon: Archive,
+    className: "bg-secondary text-muted-foreground",
   },
   cancelled: {
     icon: XCircle,

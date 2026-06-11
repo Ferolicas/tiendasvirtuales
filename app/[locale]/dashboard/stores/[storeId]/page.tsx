@@ -83,7 +83,8 @@ export default async function StoreAdvancedPage({
           <CardContent>
             <ConnectButton
               storeId={store.id}
-              connected={Boolean(store.stripeAccountId)}
+              connected={store.chargesEnabled}
+              hasAccount={Boolean(store.stripeAccountId)}
             />
           </CardContent>
         </Card>

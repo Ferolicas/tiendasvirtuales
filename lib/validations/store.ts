@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { imageUrlSchema } from "@/lib/validations/product";
+import { STORE_CATEGORIES } from "@/lib/verticals";
 
 export const BANNER_PRESETS = [
   "comidas",
@@ -12,6 +13,7 @@ export const BANNER_PRESETS = [
 
 export const createStoreSchema = z.object({
   name: z.string().min(2).max(80),
+  storeCategory: z.enum(STORE_CATEGORIES),
   description: z.string().max(500).optional(),
   currency: z.enum(["EUR", "USD", "COP", "MXN"]).default("EUR"),
   logoUrl: imageUrlSchema.optional(),

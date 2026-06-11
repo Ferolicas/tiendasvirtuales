@@ -14,6 +14,7 @@ import {
   ComandaBoard,
   type ComandaOrder,
 } from "@/components/dashboard/comanda-board";
+import { verticalFor } from "@/lib/verticals";
 
 export async function generateMetadata() {
   const t = await getTranslations("comanda");
@@ -32,7 +33,11 @@ export default async function OrdersDashboardPage() {
   if (!session?.user) redirect("/login");
 
   const ownStores = await db
-    .select({ id: stores.id, name: stores.name })
+    .select({
+      id: stores.id,
+      name: stores.name,
+      storeCategory: stores.storeCategory,
+    })
     .from(stores)
     .where(
       and(eq(stores.ownerId, session.user.id), sql`${stores.deletedAt} IS NULL`)
@@ -141,6 +146,9 @@ export default async function OrdersDashboardPage() {
   }
 
   const storeNameById = new Map(ownStores.map((s) => [s.id, s.name]));
+  const verticalById = new Map(
+    ownStores.map((s) => [s.id, verticalFor(s.storeCategory)])
+  );
   const initialOrders: ComandaOrder[] = recent.map((order) => ({
     id: order.id,
     orderNumber: order.orderNumber,
@@ -161,6 +169,7 @@ export default async function OrdersDashboardPage() {
     deliveredAt: order.deliveredAt?.toISOString() ?? null,
     lines: linesByOrder.get(order.id) ?? [],
     review: reviewByOrder.get(order.id) ?? null,
+    vertical: verticalById.get(order.storeId) ?? "general",
   }));
 
   return (

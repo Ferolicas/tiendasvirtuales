@@ -62,9 +62,53 @@ export async function POST(
   const link = await stripe.accountLinks.create({
     account: accountId,
     type: "account_onboarding",
-    refresh_url: `${appUrl}/dashboard/stores/${store.id}?connect=refresh`,
-    return_url: `${appUrl}/dashboard/stores/${store.id}?connect=done`,
+    refresh_url: `${appUrl}/dashboard/stores?connect=refresh`,
+    return_url: `${appUrl}/dashboard/stores?connect=done`,
   });
 
   return Response.json({ url: link.url });
+}
+
+// Verifica con Stripe si la cuenta puede cobrar DE VERDAD (charges_enabled)
+// y persiste el resultado. Tener cuenta creada no es estar activado.
+export async function GET(
+  _req: Request,
+  { params }: { params: Promise<{ storeId: string }> }
+) {
+  const session = await auth();
+  if (!session?.user?.id) return new Response("Unauthorized", { status: 401 });
+  if (!stripeConfigured()) {
+    return Response.json({ connected: false, pending: false });
+  }
+
+  const { storeId } = await params;
+  const [store] = await db
+    .select()
+    .from(stores)
+    .where(and(eq(stores.id, storeId), isNull(stores.deletedAt)))
+    .limit(1);
+  if (!store) return new Response("Not Found", { status: 404 });
+  if (store.ownerId !== session.user.id) {
+    return new Response("Forbidden", { status: 403 });
+  }
+
+  if (!store.stripeAccountId) {
+    return Response.json({ connected: false, pending: false });
+  }
+
+  let enabled = store.chargesEnabled;
+  try {
+    const account = await getStripe().accounts.retrieve(store.stripeAccountId);
+    enabled = Boolean(account.charges_enabled);
+    if (enabled !== store.chargesEnabled) {
+      await db
+        .update(stores)
+        .set({ chargesEnabled: enabled })
+        .where(eq(stores.id, storeId));
+    }
+  } catch {
+    // si Stripe no responde, devolvemos el último estado conocido
+  }
+
+  return Response.json({ connected: enabled, pending: !enabled });
 }

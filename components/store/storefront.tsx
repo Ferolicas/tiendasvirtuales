@@ -644,6 +644,7 @@ interface TrackedSummary {
   customerName: string;
   storeName: string;
   storePhone: string | null;
+  vertical: "food" | "digital" | "general";
   hasReview: boolean;
 }
 
@@ -743,6 +744,7 @@ function ActiveOrderBar({
               }}
               storeName={data.storeName}
               storePhone={data.storePhone}
+              vertical={data.vertical}
             />
           </div>
         </DrawerContent>

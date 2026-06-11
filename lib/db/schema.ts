@@ -80,6 +80,9 @@ export const stores = pgTable("stores", {
   name: text("name").notNull(),
   slug: text("slug").notNull().unique(),
   description: text("description"),
+  // Categoría del negocio (12, estilo Shopify): personaliza el copy del
+  // tracking, la comanda y los emails según el vertical (comida vs resto).
+  storeCategory: text("store_category"),
   logoUrl: text("logo_url"),
   // Cabecera estilo Uber Eats: banner (predefinido por categoría o subido),
   // horario, teléfono y dirección visibles, y recogida en tienda opcional.
@@ -106,6 +109,9 @@ export const stores = pgTable("stores", {
   contactEmail: text("contact_email"),
   plan: planEnum("plan").notNull().default("free"),
   stripeAccountId: text("stripe_account_id"),
+  // Solo true cuando Stripe confirma que la cuenta puede cobrar de verdad
+  // (charges_enabled); tener stripeAccountId NO significa activado.
+  chargesEnabled: boolean("charges_enabled").notNull().default(false),
   stripeCustomerId: text("stripe_customer_id"),
   stripeSubscriptionId: text("stripe_subscription_id"),
   subscriptionStatus: text("subscription_status"),

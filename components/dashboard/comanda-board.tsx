@@ -64,6 +64,7 @@ export interface ComandaOrder {
   deliveredAt: string | null;
   lines: { name: string; quantity: number }[];
   review: { rating: number; comment: string | null } | null;
+  vertical: "food" | "digital" | "general";
 }
 
 interface Kpis {
@@ -139,9 +140,9 @@ export function ComandaBoard({
   const [connected, setConnected] = useState(false);
   const [now, setNow] = useState(() => Date.now());
   const [period, setPeriod] = useState<"day" | "month" | "year">("day");
-  const [tab, setTab] = useState<"delivered" | "cancelled" | "pending">(
-    "delivered"
-  );
+  const [tab, setTab] = useState<
+    "delivered" | "cancelled" | "pending" | "archived"
+  >("delivered");
   const [cancelTarget, setCancelTarget] = useState<ComandaOrder | null>(null);
   const [detailOrder, setDetailOrder] = useState<ComandaOrder | null>(null);
   const cancelReason = useRef("");
@@ -171,6 +172,7 @@ export function ComandaBoard({
                 cancelReason: null,
                 deliveredAt: null,
                 review: null,
+                vertical: order.vertical ?? "general",
               },
               ...prev,
             ]
@@ -249,6 +251,24 @@ export function ComandaBoard({
         .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
     [orders]
   );
+  const archived = useMemo(
+    () =>
+      orders
+        .filter((o) => o.status === "archived")
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+    [orders]
+  );
+
+  async function deleteArchived(order: ComandaOrder) {
+    setOrders((prev) => prev.filter((o) => o.id !== order.id));
+    const res = await fetch(`/api/orders/${order.id}`, { method: "DELETE" });
+    if (!res.ok) {
+      setOrders((prev) => [order, ...prev]);
+      toast.error(tDash("orderUpdateFailed"));
+    } else {
+      toast.success(t("orderDeleted"));
+    }
+  }
 
   async function transition(
     order: ComandaOrder,
@@ -491,7 +511,10 @@ export function ComandaBoard({
               );
             if (o.acceptedAt && o.readyAt)
               times.push(
-                t("prepLabel", { time: diff(o.acceptedAt, o.readyAt) })
+                t("prepLabel", {
+                  time: diff(o.acceptedAt, o.readyAt),
+                  vertical: o.vertical,
+                })
               );
             return times;
           }}
@@ -513,6 +536,7 @@ export function ComandaBoard({
               ["delivered", t("tabDelivered"), delivered.length],
               ["cancelled", t("tabCancelled"), cancelled.length],
               ["pending", t("tabPending"), pendingTab.length],
+              ["archived", t("tabArchived"), archived.length],
             ] as const
           ).map(([value, label, count]) => (
             <button
@@ -534,7 +558,9 @@ export function ComandaBoard({
             ? delivered
             : tab === "cancelled"
               ? cancelled
-              : pendingTab
+              : tab === "pending"
+                ? pendingTab
+                : archived
           )
             .slice(0, 30)
             .map((order) => (
@@ -564,6 +590,20 @@ export function ComandaBoard({
                   {formatPrice(order.totalCents, currency)}
                 </span>
                 <StatusBadge status={order.status} />
+                {tab === "archived" ? (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 rounded-full text-xs text-destructive"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deleteArchived(order);
+                    }}
+                  >
+                    <Trash2 className="size-3" />
+                    {t("deleteForever")}
+                  </Button>
+                ) : null}
                 {tab === "pending" ? (
                   <span className="flex gap-1.5">
                     <Button
@@ -634,7 +674,9 @@ export function ComandaBoard({
                   {detailOrder.acceptedAt && detailOrder.readyAt ? (
                     <p className="flex justify-between">
                       <span className="text-muted-foreground">
-                        {t("phaseKitchenLabel")}
+                        {t("phaseKitchenLabel", {
+                          vertical: detailOrder.vertical,
+                        })}
                       </span>
                       <span className="font-mono font-bold">
                         {diff(detailOrder.acceptedAt, detailOrder.readyAt)}

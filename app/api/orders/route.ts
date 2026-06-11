@@ -13,6 +13,7 @@ import { emitToStore } from "@/lib/realtime";
 import { getStripe, stripeConfigured } from "@/lib/stripe";
 import { feeFor } from "@/lib/plan";
 import { verifyTurnstile } from "@/lib/turnstile";
+import { verticalFor } from "@/lib/verticals";
 import {
   sendOrderConfirmationEmail,
   sendOwnerNewOrderEmail,
@@ -166,6 +167,7 @@ export async function POST(req: Request) {
     createdAt: order.createdAt,
     acceptedAt: null,
     readyAt: null,
+    vertical: verticalFor(store.storeCategory),
     lines: items.map((i) => ({
       name: productById.get(i.productId)?.name ?? "Producto",
       quantity: i.quantity,
@@ -215,7 +217,12 @@ export async function POST(req: Request) {
   // Cobro con tarjeta vía Stripe Connect (cargo directo en la cuenta de la
   // tienda con comisión de plataforma según el plan del dueño).
   let checkoutUrl: string | null = null;
-  if (paymentMethod === "card" && stripeConfigured() && store.stripeAccountId) {
+  if (
+    paymentMethod === "card" &&
+    stripeConfigured() &&
+    store.stripeAccountId &&
+    store.chargesEnabled
+  ) {
     try {
       const [owner] = await db
         .select({ plan: users.plan })

@@ -6,6 +6,7 @@ import { Link } from "@/i18n/navigation";
 import { db } from "@/lib/db";
 import { orders, reviews, stores } from "@/lib/db/schema";
 import { TrackOrder } from "@/components/store/track-order";
+import { verticalFor } from "@/lib/verticals";
 
 export const metadata = { title: "Seguimiento · Tracking" };
 
@@ -62,6 +63,7 @@ export default async function OrderTrackingPage({
           }}
           storeName={row.store.name}
           storePhone={row.store.phone}
+          vertical={verticalFor(row.store.storeCategory)}
         />
       </section>
     </main>

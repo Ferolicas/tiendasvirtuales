@@ -8,6 +8,7 @@ import { stores } from "@/lib/db/schema";
 import { rateLimit, clientIdentifier } from "@/lib/rate-limit";
 import { UPLOAD_DIR } from "@/lib/storage";
 import { imageUrlSchema } from "@/lib/validations/product";
+import { STORE_CATEGORIES } from "@/lib/verticals";
 
 const BANNER_PRESETS = [
   "comidas",
@@ -20,6 +21,7 @@ const BANNER_PRESETS = [
 
 const updateStoreSchema = z.object({
   name: z.string().min(2).max(80).optional(),
+  storeCategory: z.enum(STORE_CATEGORIES).optional(),
   description: z.string().max(500).optional(),
   shippingCents: z.number().int().min(0).max(100_000).optional(),
   logoUrl: imageUrlSchema.nullable().optional(),

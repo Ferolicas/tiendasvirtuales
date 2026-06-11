@@ -200,3 +200,29 @@ export async function PATCH(
 
   return Response.json({ order: updated });
 }
+
+// Eliminar definitivamente un pedido ARCHIVADO (limpieza del historial).
+export async function DELETE(
+  req: Request,
+  { params }: { params: Promise<{ orderId: string }> }
+) {
+  const session = await auth();
+  if (!session?.user?.id) return new Response("Unauthorized", { status: 401 });
+  if (!rateLimit(`order-del:${clientIdentifier(req)}`, 20, 60_000)) {
+    return new Response("Too Many Requests", { status: 429 });
+  }
+
+  const { orderId } = await params;
+  if (!z.uuid().safeParse(orderId).success) {
+    return new Response("Bad Request", { status: 400 });
+  }
+
+  const order = await loadOwnedOrder(orderId, session.user.id);
+  if (!order) return new Response("Not Found", { status: 404 });
+  if (order.status !== "archived") {
+    return Response.json({ error: "only_archived" }, { status: 409 });
+  }
+
+  await db.delete(orders).where(eq(orders.id, orderId));
+  return Response.json({ ok: true });
+}

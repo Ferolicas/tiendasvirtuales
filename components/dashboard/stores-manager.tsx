@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   CreditCard,
   Loader2,
@@ -38,6 +38,11 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { VendiLiveDot } from "@/components/shared/vendi-dot";
 import { Link } from "@/i18n/navigation";
 import type { AccountProfile } from "@/components/dashboard/account-panel";
+import {
+  CATEGORY_BANNER,
+  STORE_CATEGORIES,
+  type StoreCategory,
+} from "@/lib/verticals";
 
 const PRESETS = [
   "comidas",
@@ -52,6 +57,8 @@ export interface ManagedStore {
   id: string;
   name: string;
   slug: string;
+  storeCategory: string | null;
+  chargesEnabled: boolean;
   description: string | null;
   logoUrl: string | null;
   bannerUrl: string | null;
@@ -76,6 +83,30 @@ export function StoresManager({
   const tEmpty = useTranslations("empty");
   const tToast = useTranslations("toasts");
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Al volver del onboarding de Stripe: verificar contra Stripe si la
+  // cuenta quedó habilitada DE VERDAD (charges_enabled).
+  useEffect(() => {
+    if (searchParams.get("connect") !== "done") return;
+    const pending = stores.filter(
+      (s) => s.stripeAccountId && !s.chargesEnabled
+    );
+    if (pending.length === 0) return;
+    void Promise.all(
+      pending.map((s) =>
+        fetch(`/api/stores/${s.id}/connect`).then((r) =>
+          r.ok ? r.json() : null
+        )
+      )
+    ).then((results) => {
+      if (results.some((r) => r?.connected)) {
+        toast.success(t("connectDoneToast"));
+      }
+      router.refresh();
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [editing, setEditing] = useState<ManagedStore | "new" | null>(null);
   const [deleting, setDeleting] = useState<ManagedStore | null>(null);
@@ -84,12 +115,16 @@ export function StoresManager({
   const [preset, setPreset] = useState<string | null>(null);
   const [customBanner, setCustomBanner] = useState(false);
   const [pickup, setPickup] = useState(false);
+  const [category, setCategory] = useState<string>("moda");
 
   function openModal(store: ManagedStore | "new") {
     setEditing(store);
     setPreset(store === "new" ? null : store.bannerPreset);
     setCustomBanner(store !== "new" && Boolean(store.bannerUrl));
     setPickup(store === "new" ? false : store.pickupEnabled);
+    setCategory(
+      store === "new" ? "moda" : (store.storeCategory ?? "moda")
+    );
   }
 
   async function uploadFile(
@@ -117,8 +152,15 @@ export function StoresManager({
     const form = new FormData(event.currentTarget);
     const isNew = editing === "new";
 
+    // Sin banner elegido: se sugiere el predefinido de la categoría.
+    const effectivePreset =
+      !customBanner && !preset
+        ? CATEGORY_BANNER[category as StoreCategory]
+        : preset;
+
     const base = {
       name: String(form.get("name") ?? ""),
+      storeCategory: category,
       description: String(form.get("description") ?? "") || undefined,
       schedule: String(form.get("schedule") ?? "") || undefined,
       phone: String(form.get("phone") ?? "") || undefined,
@@ -126,7 +168,9 @@ export function StoresManager({
       pickupEnabled: pickup,
       legalName: String(form.get("legalName") ?? "") || undefined,
       legalTaxId: String(form.get("legalTaxId") ?? "") || undefined,
-      ...(preset && !customBanner ? { bannerPreset: preset } : {}),
+      ...(effectivePreset && !customBanner
+        ? { bannerPreset: effectivePreset }
+        : {}),
     };
 
     let storeId = isNew ? null : editing.id;
@@ -169,9 +213,9 @@ export function StoresManager({
     if (bannerUrl) {
       patch.bannerUrl = bannerUrl;
       patch.bannerPreset = null;
-    } else if (preset && !customBanner) {
+    } else if (effectivePreset && !customBanner) {
       patch.bannerUrl = null;
-      patch.bannerPreset = preset;
+      patch.bannerPreset = effectivePreset;
     }
 
     const res = await fetch(`/api/stores/${storeId}`, {
@@ -266,7 +310,7 @@ export function StoresManager({
                     /s/{store.slug}
                   </Link>
                 </div>
-                {store.stripeAccountId ? (
+                {store.chargesEnabled ? (
                   <Badge
                     variant="secondary"
                     className="ml-auto gap-1 rounded-full"
@@ -274,12 +318,19 @@ export function StoresManager({
                     <VendiLiveDot />
                     <CreditCard className="size-3" />
                   </Badge>
+                ) : store.stripeAccountId ? (
+                  <Badge
+                    variant="secondary"
+                    className="ml-auto rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300"
+                  >
+                    {t("connectPendingStripe")}
+                  </Badge>
                 ) : null}
               </div>
 
               {/* Las 3 acciones canónicas de la tarjeta */}
               <div className="flex flex-wrap gap-2">
-                {!store.stripeAccountId ? (
+                {!store.chargesEnabled ? (
                   <Button
                     size="sm"
                     onClick={() => onConnect(store)}
@@ -291,7 +342,9 @@ export function StoresManager({
                     ) : (
                       <CreditCard className="size-3.5" />
                     )}
-                    {t("connectButton")}
+                    {store.stripeAccountId
+                      ? t("connectContinue")
+                      : t("connectButton")}
                   </Button>
                 ) : null}
                 <Button
@@ -347,6 +400,21 @@ export function StoresManager({
                   defaultValue={current?.name ?? ""}
                   required
                 />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="st-category">{t("storeCategoryLabel")}</Label>
+                <select
+                  id="st-category"
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  className="border-input h-9 rounded-md border bg-transparent px-3 text-sm"
+                >
+                  {STORE_CATEGORIES.map((value) => (
+                    <option key={value} value={value}>
+                      {t(`storeCat_${value}`)}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="st-desc">{t("storeDescription")}</Label>

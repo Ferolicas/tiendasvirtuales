@@ -7,6 +7,7 @@ import {
   CheckCheck,
   ChefHat,
   Clock,
+  Package,
   PackageCheck,
   Phone,
   Receipt,
@@ -29,16 +30,26 @@ interface TrackedOrder {
   hasReview: boolean;
 }
 
+export type TrackVertical = "food" | "digital" | "general";
+
 const STEPS = ["paid", "preparing", "ready", "delivered"] as const;
 
 // Animación infinita característica de cada fase (estilo Burger King):
 // la escena se repite en bucle mientras el pedido esté en esa fase.
-function PhaseAnimation({ status }: { status: string }) {
+// El icono de preparación depende del vertical: cocina solo si es comida.
+function PhaseAnimation({
+  status,
+  vertical,
+}: {
+  status: string;
+  vertical: TrackVertical;
+}) {
   const reduced = useReducedMotion();
+  const PrepIcon = vertical === "food" ? ChefHat : Package;
 
   if (reduced) {
     const Icon =
-      status === "preparing" ? ChefHat : status === "ready" ? Bike : Clock;
+      status === "preparing" ? PrepIcon : status === "ready" ? Bike : Clock;
     return <Icon className="size-12 text-brand" />;
   }
 
@@ -76,17 +87,23 @@ function PhaseAnimation({ status }: { status: string }) {
           animate={{ rotate: [-8, 8, -8] }}
           transition={{ duration: 0.9, repeat: Infinity, ease: "easeInOut" }}
         >
-          <ChefHat className="size-9 text-accent-foreground" />
+          <PrepIcon className="size-9 text-accent-foreground" />
         </motion.div>
-        {[0, 1, 2].map((i) => (
-          <motion.span
-            key={i}
-            className="absolute bottom-2 size-1 rounded-full bg-brand"
-            style={{ left: `${30 + i * 15}%` }}
-            animate={{ y: [-2, -14], opacity: [0.9, 0] }}
-            transition={{ duration: 1.1, repeat: Infinity, delay: i * 0.35 }}
-          />
-        ))}
+        {vertical === "food"
+          ? [0, 1, 2].map((i) => (
+              <motion.span
+                key={i}
+                className="absolute bottom-2 size-1 rounded-full bg-brand"
+                style={{ left: `${30 + i * 15}%` }}
+                animate={{ y: [-2, -14], opacity: [0.9, 0] }}
+                transition={{
+                  duration: 1.1,
+                  repeat: Infinity,
+                  delay: i * 0.35,
+                }}
+              />
+            ))
+          : null}
       </div>
     );
   }
@@ -130,10 +147,12 @@ export function TrackOrder({
   order,
   storeName,
   storePhone,
+  vertical = "general",
 }: {
   order: TrackedOrder;
   storeName: string;
   storePhone: string | null;
+  vertical?: TrackVertical;
 }) {
   const t = useTranslations("tracking");
   const [status, setStatus] = useState(order.status);
@@ -166,7 +185,7 @@ export function TrackOrder({
       : normalized === "paid"
         ? t("msgReceived")
         : normalized === "preparing"
-          ? t("msgPreparing")
+          ? t("msgPreparing", { vertical })
           : normalized === "ready"
             ? order.fulfillment === "pickup"
               ? t("msgReadyPickup")
@@ -207,7 +226,7 @@ export function TrackOrder({
       </div>
 
       <div className="flex flex-col items-center gap-5">
-        <PhaseAnimation status={normalized} />
+        <PhaseAnimation status={normalized} vertical={vertical} />
         <p className="max-w-sm text-center text-lg font-bold tracking-tight">
           {message}
         </p>
@@ -228,7 +247,11 @@ export function TrackOrder({
                 {i === 0 ? (
                   <Receipt className="size-3.5" />
                 ) : i === 1 ? (
-                  <ChefHat className="size-3.5" />
+                  vertical === "food" ? (
+                    <ChefHat className="size-3.5" />
+                  ) : (
+                    <Package className="size-3.5" />
+                  )
                 ) : i === 2 ? (
                   <Bike className="size-3.5" />
                 ) : (

@@ -1,7 +1,7 @@
 import type Stripe from "stripe";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { orders, users } from "@/lib/db/schema";
+import { orders, stores, users } from "@/lib/db/schema";
 import { getStripe, stripeConfigured } from "@/lib/stripe";
 import { emitToStore } from "@/lib/realtime";
 
@@ -92,6 +92,17 @@ export async function POST(req: Request) {
           })
           .where(eq(users.id, userId));
       }
+      break;
+    }
+
+    // Cuenta Connect verificada (o suspendida): refleja la realidad de
+    // Stripe en el flag charges_enabled de la tienda.
+    case "account.updated": {
+      const account = event.data.object;
+      await db
+        .update(stores)
+        .set({ chargesEnabled: Boolean(account.charges_enabled) })
+        .where(eq(stores.stripeAccountId, account.id));
       break;
     }
 

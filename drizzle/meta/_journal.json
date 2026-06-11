@@ -50,6 +50,13 @@
       "when": 1781177070629,
       "tag": "0006_organic_mauler",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1781180072485,
+      "tag": "0007_minor_captain_britain",
+      "breakpoints": true
     }
   ]
 }
