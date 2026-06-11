@@ -10,12 +10,17 @@ import {
 import Image from "next/image";
 import {
   ArrowLeft,
+  Bike,
+  CreditCard,
+  Flame,
   Loader2,
   Minus,
   Plus,
   ShoppingBag,
+  Sparkles,
   Store as StoreIcon,
   Trash2,
+  Wallet,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -40,6 +45,7 @@ export interface StorefrontStore {
   description: string | null;
   currency: string;
   shippingCents: number;
+  pickupEnabled: boolean;
 }
 
 export interface StorefrontProduct {
@@ -47,8 +53,35 @@ export interface StorefrontProduct {
   name: string;
   description: string | null;
   priceCents: number;
+  compareAtCents: number | null;
   imageUrl: string | null;
   stock: number;
+  unlimitedStock: boolean;
+  recommended: boolean;
+  salesCount: number;
+  categoryId: string | null;
+}
+
+export interface StorefrontCategory {
+  id: string;
+  name: string;
+}
+
+function maxQuantity(product: StorefrontProduct): number {
+  return product.unlimitedStock ? 99 : Math.min(product.stock, 99);
+}
+
+function isSoldOut(product: StorefrontProduct): boolean {
+  return !product.unlimitedStock && product.stock <= 0;
+}
+
+function discountPercent(product: StorefrontProduct): number | null {
+  if (!product.compareAtCents || product.compareAtCents <= product.priceCents) {
+    return null;
+  }
+  return Math.round(
+    (1 - product.priceCents / product.compareAtCents) * 100
+  );
 }
 
 // ── Carrito (contexto + persistencia por tienda) ─────────────────────────
@@ -97,9 +130,11 @@ function ProductImage({
 // ── Escaparate ───────────────────────────────────────────────────────────
 export function Storefront({
   store,
+  categories,
   products,
 }: {
   store: StorefrontStore;
+  categories: StorefrontCategory[];
   products: StorefrontProduct[];
 }) {
   const t = useTranslations("store");
@@ -110,20 +145,65 @@ export function Storefront({
   const [hydrated, setHydrated] = useState(false);
   const [detail, setDetail] = useState<StorefrontProduct | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
+  const [highlightTab, setHighlightTab] = useState<"recommended" | "best">(
+    "recommended"
+  );
 
   const productById = useMemo(
     () => new Map(products.map((p) => [p.id, p])),
     [products]
   );
 
+  const recommended = useMemo(
+    () => products.filter((p) => p.recommended),
+    [products]
+  );
+  const bestSellers = useMemo(
+    () =>
+      [...products]
+        .filter((p) => p.salesCount > 0)
+        .sort((a, b) => b.salesCount - a.salesCount)
+        .slice(0, 8),
+    [products]
+  );
+  const showHighlights = recommended.length > 0 || bestSellers.length > 0;
+  const activeHighlight =
+    highlightTab === "recommended" && recommended.length > 0
+      ? recommended
+      : bestSellers.length > 0
+        ? bestSellers
+        : recommended;
+
+  const grouped = useMemo(() => {
+    const byCategory = new Map<string | null, StorefrontProduct[]>();
+    for (const product of products) {
+      const key = product.categoryId;
+      byCategory.set(key, [...(byCategory.get(key) ?? []), product]);
+    }
+    const sections: { id: string | null; name: string | null; items: StorefrontProduct[] }[] = [];
+    for (const category of categories) {
+      const list = byCategory.get(category.id);
+      if (list?.length) {
+        sections.push({ id: category.id, name: category.name, items: list });
+      }
+    }
+    const uncategorized = byCategory.get(null);
+    if (uncategorized?.length) {
+      sections.push({
+        id: null,
+        name: categories.length > 0 ? null : null,
+        items: uncategorized,
+      });
+    }
+    return sections;
+  }, [products, categories]);
+
   useEffect(() => {
     try {
       const raw = localStorage.getItem(storageKey);
       if (raw) {
         const entries = JSON.parse(raw) as [string, number][];
-        // Solo productos que sigan existiendo y con stock vigente.
-        const valid = entries.filter(([id]) => productById.has(id));
-        setItems(new Map(valid));
+        setItems(new Map(entries.filter(([id]) => productById.has(id))));
       }
     } catch {
       // carrito corrupto: se ignora
@@ -138,8 +218,9 @@ export function Storefront({
 
   const cart: CartContextValue = useMemo(() => {
     const clamp = (productId: string, quantity: number) => {
-      const stock = productById.get(productId)?.stock ?? 0;
-      return Math.max(0, Math.min(quantity, stock, 99));
+      const product = productById.get(productId);
+      if (!product) return 0;
+      return Math.max(0, Math.min(quantity, maxQuantity(product)));
     };
     return {
       items,
@@ -171,24 +252,90 @@ export function Storefront({
 
   return (
     <CartContext.Provider value={cart}>
-      <section className="mx-auto max-w-5xl px-5 py-12 sm:px-6">
+      <section className="mx-auto max-w-5xl px-5 pb-14 sm:px-6">
         {products.length === 0 ? (
           <EmptyState
             icon={StoreIcon}
             title={tEmpty("catalogTitle")}
             hint={tEmpty("catalogHint")}
-            className="mx-auto max-w-md"
+            className="mx-auto mt-10 max-w-md"
           />
         ) : (
-          <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-3">
-            {products.map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                currency={store.currency}
-                onOpen={() => setDetail(product)}
-              />
-            ))}
+          <div className="grid gap-10">
+            {/* División 1: Recomendados | Más vendidos */}
+            {showHighlights ? (
+              <div className="grid gap-4">
+                <div className="flex gap-1.5">
+                  {recommended.length > 0 ? (
+                    <button
+                      type="button"
+                      onClick={() => setHighlightTab("recommended")}
+                      className={`flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm font-bold tracking-tight transition-colors ${
+                        highlightTab === "recommended"
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      <Sparkles className="size-3.5" />
+                      {t("recommendedTab")}
+                    </button>
+                  ) : null}
+                  {bestSellers.length > 0 ? (
+                    <button
+                      type="button"
+                      onClick={() => setHighlightTab("best")}
+                      className={`flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm font-bold tracking-tight transition-colors ${
+                        highlightTab === "best" || recommended.length === 0
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      <Flame className="size-3.5" />
+                      {t("bestSellersTab")}
+                    </button>
+                  ) : null}
+                </div>
+                <div className="-mx-5 flex gap-4 overflow-x-auto px-5 pb-2 sm:-mx-6 sm:px-6">
+                  {activeHighlight.map((product) => (
+                    <div key={product.id} className="w-44 shrink-0 sm:w-52">
+                      <ProductCard
+                        product={product}
+                        currency={store.currency}
+                        onOpen={() => setDetail(product)}
+                        compact
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            {/* División 2: catálogo completo por categorías */}
+            <div className="grid gap-8">
+              <h2 className="flex items-center gap-2 text-2xl font-extrabold tracking-tight">
+                <VendiDot className="size-2" />
+                {t("fullCatalog")}
+              </h2>
+              {grouped.map((section) => (
+                <div key={section.id ?? "otros"} className="grid gap-4">
+                  {section.name !== null || categories.length > 0 ? (
+                    <h3 className="text-lg font-bold tracking-tight">
+                      {section.name ?? t("otherCategory")}
+                    </h3>
+                  ) : null}
+                  <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-3">
+                    {section.items.map((product) => (
+                      <ProductCard
+                        key={product.id}
+                        product={product}
+                        currency={store.currency}
+                        onOpen={() => setDetail(product)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </section>
@@ -214,24 +361,70 @@ export function Storefront({
   );
 }
 
+// ── Etiqueta de stock según las reglas del fundador ──────────────────────
+function StockLabel({ product }: { product: StorefrontProduct }) {
+  const t = useTranslations("store");
+  if (product.unlimitedStock) return null;
+  if (product.stock <= 0) return null; // el overlay «Agotado» ya lo cubre
+  if (product.stock <= 10) {
+    return (
+      <p className="text-xs font-medium text-brand">
+        {t("lowStock", { count: product.stock })}
+      </p>
+    );
+  }
+  return (
+    <p className="text-xs text-muted-foreground">{t("unitsAvailable")}</p>
+  );
+}
+
+function PriceBlock({
+  product,
+  currency,
+  large = false,
+}: {
+  product: StorefrontProduct;
+  currency: string;
+  large?: boolean;
+}) {
+  const percent = discountPercent(product);
+  return (
+    <div className="flex flex-wrap items-baseline gap-x-2">
+      <span
+        className={`font-extrabold tracking-tight ${large ? "text-xl" : ""}`}
+      >
+        {formatPrice(product.priceCents, currency)}
+      </span>
+      {percent ? (
+        <span className="text-xs text-muted-foreground line-through">
+          {formatPrice(product.compareAtCents as number, currency)}
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
 // ── Tarjeta de producto ──────────────────────────────────────────────────
 function ProductCard({
   product,
   currency,
   onOpen,
+  compact = false,
 }: {
   product: StorefrontProduct;
   currency: string;
   onOpen: () => void;
+  compact?: boolean;
 }) {
   const t = useTranslations("store");
   const cart = useCart();
-  const soldOut = product.stock <= 0;
+  const soldOut = isSoldOut(product);
   const inCart = cart.items.get(product.id) ?? 0;
-  const canAdd = !soldOut && inCart < product.stock;
+  const canAdd = !soldOut && inCart < maxQuantity(product);
+  const percent = discountPercent(product);
 
   return (
-    <div className="hover-lift group flex flex-col overflow-hidden rounded-3xl border bg-card shadow-soft">
+    <div className="hover-lift group flex h-full flex-col overflow-hidden rounded-3xl border bg-card shadow-soft">
       <button
         type="button"
         onClick={onOpen}
@@ -242,29 +435,29 @@ function ProductCard({
           product={product}
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 320px"
         />
+        {percent ? (
+          <Badge className="absolute left-3 top-3 rounded-full bg-brand font-extrabold text-brand-foreground">
+            {t("discountBadge", { percent })}
+          </Badge>
+        ) : null}
         {soldOut ? (
           <span className="absolute inset-x-0 bottom-0 bg-foreground/80 py-1.5 text-center text-xs font-semibold uppercase tracking-wider text-background backdrop-blur-sm">
             {t("outOfStock")}
           </span>
-        ) : product.stock <= 5 ? (
-          <Badge className="absolute left-3 top-3 rounded-full bg-brand text-brand-foreground">
-            {t("lowStock", { count: product.stock })}
-          </Badge>
         ) : null}
       </button>
-      <div className="flex flex-1 flex-col gap-2 p-4">
+      <div className="flex flex-1 flex-col gap-1.5 p-4">
         <button type="button" onClick={onOpen} className="text-left">
           <p className="font-bold tracking-tight">{product.name}</p>
-          {product.description ? (
+          {!compact && product.description ? (
             <p className="mt-0.5 line-clamp-1 text-xs font-light text-muted-foreground">
               {product.description}
             </p>
           ) : null}
         </button>
+        <StockLabel product={product} />
         <div className="mt-auto grid gap-2">
-          <p className="font-extrabold tracking-tight">
-            {formatPrice(product.priceCents, currency)}
-          </p>
+          <PriceBlock product={product} currency={currency} />
           <Button
             size="sm"
             disabled={!canAdd}
@@ -311,8 +504,8 @@ function ProductDetailDrawer({
     );
   }
 
-  const soldOut = product.stock <= 0;
-  const max = Math.min(product.stock, 99);
+  const soldOut = isSoldOut(product);
+  const max = maxQuantity(product);
 
   return (
     <Drawer
@@ -329,9 +522,7 @@ function ProductDetailDrawer({
           <DrawerHeader>
             <DrawerTitle className="flex items-start justify-between gap-3 text-xl tracking-tight">
               {product.name}
-              <span className="font-extrabold">
-                {formatPrice(product.priceCents, currency)}
-              </span>
+              <PriceBlock product={product} currency={currency} large />
             </DrawerTitle>
           </DrawerHeader>
           <div className="grid gap-4 px-4">
@@ -340,54 +531,48 @@ function ProductDetailDrawer({
                 {product.description}
               </p>
             ) : null}
+            <StockLabel product={product} />
             {soldOut ? (
               <Badge variant="secondary" className="w-fit rounded-full">
                 {t("outOfStock")}
               </Badge>
             ) : (
-              <>
-                {product.stock <= 5 ? (
-                  <p className="text-xs font-medium text-brand">
-                    {t("lowStock", { count: product.stock })}
-                  </p>
-                ) : null}
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center rounded-full border">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="size-9 rounded-full"
-                      onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                      aria-label="-"
-                    >
-                      <Minus className="size-3.5" />
-                    </Button>
-                    <span className="w-8 text-center text-sm font-bold">
-                      {quantity}
-                    </span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="size-9 rounded-full"
-                      onClick={() => setQuantity((q) => Math.min(max, q + 1))}
-                      aria-label="+"
-                    >
-                      <Plus className="size-3.5" />
-                    </Button>
-                  </div>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center rounded-full border">
                   <Button
-                    className="flex-1 rounded-full"
-                    onClick={() => {
-                      cart.add(product.id, quantity);
-                      toast.success(t("addedToCart"));
-                      onAdded();
-                    }}
+                    variant="ghost"
+                    size="icon"
+                    className="size-9 rounded-full"
+                    onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                    aria-label="-"
                   >
-                    <ShoppingBag className="size-4" />
-                    {t("addToCart")}
+                    <Minus className="size-3.5" />
+                  </Button>
+                  <span className="w-8 text-center text-sm font-bold">
+                    {quantity}
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-9 rounded-full"
+                    onClick={() => setQuantity((q) => Math.min(max, q + 1))}
+                    aria-label="+"
+                  >
+                    <Plus className="size-3.5" />
                   </Button>
                 </div>
-              </>
+                <Button
+                  className="flex-1 rounded-full"
+                  onClick={() => {
+                    cart.add(product.id, quantity);
+                    toast.success(t("addedToCart"));
+                    onAdded();
+                  }}
+                >
+                  <ShoppingBag className="size-4" />
+                  {t("addToCart")}
+                </Button>
+              </div>
             )}
           </div>
         </div>
@@ -418,7 +603,7 @@ function CartButton({ onOpen }: { onOpen: () => void }) {
   );
 }
 
-// ── Carrito + checkout + confirmación ────────────────────────────────────
+// ── Carrito + checkout v2 + confirmación con seguimiento ────────────────
 function CartDrawer({
   open,
   onClose,
@@ -434,8 +619,15 @@ function CartDrawer({
   const cart = useCart();
   const [step, setStep] = useState<"cart" | "details" | "done">("cart");
   const [sending, setSending] = useState(false);
-  const [orderRef, setOrderRef] = useState("");
-  const [doneEmail, setDoneEmail] = useState("");
+  const [fulfillment, setFulfillment] = useState<"delivery" | "pickup">(
+    "delivery"
+  );
+  const [payment, setPayment] = useState<"card" | "in_store">("card");
+  const [done, setDone] = useState<{
+    orderNumber: number;
+    trackUrl: string;
+    email: string;
+  } | null>(null);
 
   const lines = [...cart.items.entries()]
     .map(([id, quantity]) => ({ product: productById.get(id), quantity }))
@@ -447,7 +639,9 @@ function CartDrawer({
     (sum, l) => sum + l.product.priceCents * l.quantity,
     0
   );
-  const total = subtotal + (lines.length > 0 ? store.shippingCents : 0);
+  const shipping =
+    fulfillment === "delivery" && lines.length > 0 ? store.shippingCents : 0;
+  const total = subtotal + shipping;
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -462,6 +656,11 @@ function CartDrawer({
         storeId: store.id,
         customerName: form.get("name"),
         customerEmail: email,
+        customerPhone: form.get("phone"),
+        fulfillment,
+        deliveryAddress:
+          fulfillment === "delivery" ? form.get("address") : undefined,
+        paymentMethod: fulfillment === "pickup" ? payment : "card",
         items: lines.map((l) => ({
           productId: l.product.id,
           quantity: l.quantity,
@@ -485,8 +684,11 @@ function CartDrawer({
       window.location.href = data.checkoutUrl;
       return;
     }
-    setOrderRef(String(data.order.id).slice(0, 8).toUpperCase());
-    setDoneEmail(email);
+    setDone({
+      orderNumber: data.order.orderNumber,
+      trackUrl: data.trackUrl,
+      email,
+    });
     setStep("done");
   }
 
@@ -496,14 +698,13 @@ function CartDrawer({
       onOpenChange={(value) => {
         if (!value) {
           onClose();
-          if (step === "done") setStep("cart");
-          if (step === "details" && !sending) setStep("cart");
+          if (step !== "details" || !sending) setStep("cart");
         }
       }}
     >
-      <DrawerContent>
-        <div className="mx-auto w-full max-w-md pb-8">
-          {step === "done" ? (
+      <DrawerContent className="max-h-[92dvh]">
+        <div className="mx-auto w-full max-w-md overflow-y-auto pb-8">
+          {step === "done" && done ? (
             <div className="hero-glow px-6 py-10 text-center">
               <p className="mx-auto mb-4 flex size-12 items-center justify-center rounded-2xl bg-brand/10">
                 <VendiDot pulse className="size-3" />
@@ -512,20 +713,19 @@ function CartDrawer({
                 {t("orderConfirmedTitle")}
               </h3>
               <p className="mt-1 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                {t("orderRef")} · {orderRef}
+                {t("orderRef")} · #{done.orderNumber}
               </p>
               <p className="mx-auto mt-3 max-w-xs text-sm font-light leading-relaxed text-muted-foreground">
-                {t("orderConfirmedText", { email: doneEmail })}
+                {t("orderConfirmedText", { email: done.email })}
               </p>
-              <Button
-                onClick={() => {
-                  onClose();
-                  setStep("cart");
-                }}
-                className="mt-6 rounded-full"
-              >
-                {t("continueShopping")}
-              </Button>
+              <div className="mt-6 grid gap-2">
+                <Button asChild className="rounded-full">
+                  <a href={done.trackUrl}>{t("trackOrder")}</a>
+                </Button>
+                <p className="text-xs font-light text-muted-foreground">
+                  {t("trackHint")}
+                </p>
+              </div>
             </div>
           ) : step === "details" ? (
             <>
@@ -541,26 +741,127 @@ function CartDrawer({
               >
                 <div className="grid gap-2">
                   <Label htmlFor="checkout-name">{t("yourName")}</Label>
-                  <Input id="checkout-name" name="name" minLength={2} required autoFocus />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="checkout-email">{t("yourEmail")}</Label>
                   <Input
-                    id="checkout-email"
-                    name="email"
-                    type="email"
-                    autoComplete="email"
+                    id="checkout-name"
+                    name="name"
+                    minLength={2}
+                    autoComplete="name"
                     required
+                    autoFocus
                   />
                 </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="grid gap-2">
+                    <Label htmlFor="checkout-phone">{t("phoneLabel")}</Label>
+                    <Input
+                      id="checkout-phone"
+                      name="phone"
+                      type="tel"
+                      minLength={6}
+                      autoComplete="tel"
+                      required
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="checkout-email">{t("yourEmail")}</Label>
+                    <Input
+                      id="checkout-email"
+                      name="email"
+                      type="email"
+                      autoComplete="email"
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* Domicilio o recogida */}
+                {store.pickupEnabled ? (
+                  <div className="grid gap-2">
+                    <Label>{t("fulfillmentLabel")}</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setFulfillment("delivery")}
+                        className={`flex items-center justify-center gap-2 rounded-2xl border px-3 py-2.5 text-sm font-bold transition-colors ${
+                          fulfillment === "delivery"
+                            ? "border-primary bg-primary text-primary-foreground"
+                            : "text-muted-foreground"
+                        }`}
+                      >
+                        <Bike className="size-4" />
+                        {t("deliveryOption")}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setFulfillment("pickup")}
+                        className={`flex items-center justify-center gap-2 rounded-2xl border px-3 py-2.5 text-sm font-bold transition-colors ${
+                          fulfillment === "pickup"
+                            ? "border-primary bg-primary text-primary-foreground"
+                            : "text-muted-foreground"
+                        }`}
+                      >
+                        <StoreIcon className="size-4" />
+                        {t("pickupOption")}
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+
+                {fulfillment === "delivery" ? (
+                  <div className="grid gap-2">
+                    <Label htmlFor="checkout-address">
+                      {t("addressLabel")}
+                    </Label>
+                    <Input
+                      id="checkout-address"
+                      name="address"
+                      minLength={5}
+                      autoComplete="street-address"
+                      required
+                    />
+                  </div>
+                ) : (
+                  <div className="grid gap-2">
+                    <Label>{t("paymentLabel")}</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setPayment("card")}
+                        className={`flex items-center justify-center gap-2 rounded-2xl border px-3 py-2.5 text-sm font-bold transition-colors ${
+                          payment === "card"
+                            ? "border-primary bg-primary text-primary-foreground"
+                            : "text-muted-foreground"
+                        }`}
+                      >
+                        <CreditCard className="size-4" />
+                        {t("payCard")}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPayment("in_store")}
+                        className={`flex items-center justify-center gap-2 rounded-2xl border px-3 py-2.5 text-sm font-bold transition-colors ${
+                          payment === "in_store"
+                            ? "border-primary bg-primary text-primary-foreground"
+                            : "text-muted-foreground"
+                        }`}
+                      >
+                        <Wallet className="size-4" />
+                        {t("payInStore")}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex items-center justify-between rounded-2xl bg-secondary/60 px-4 py-3 text-sm font-bold">
                   <span>{t("total")}</span>
                   <span>{formatPrice(total, store.currency)}</span>
                 </div>
                 <Turnstile />
-                <p className="text-xs font-light text-muted-foreground">
-                  {t("payNote")}
-                </p>
+                {fulfillment === "delivery" || payment === "card" ? (
+                  <p className="text-xs font-light text-muted-foreground">
+                    {t("payNote")}
+                  </p>
+                ) : null}
                 <div className="flex gap-2">
                   <Button
                     type="button"
@@ -637,7 +938,7 @@ function CartDrawer({
                               size="icon"
                               className="size-7 rounded-full"
                               aria-label="+"
-                              disabled={quantity >= product.stock}
+                              disabled={quantity >= maxQuantity(product)}
                               onClick={() =>
                                 cart.setQuantity(product.id, quantity + 1)
                               }
@@ -665,8 +966,8 @@ function CartDrawer({
                       <div className="flex justify-between text-muted-foreground">
                         <span>{t("shipping")}</span>
                         <span>
-                          {store.shippingCents > 0
-                            ? formatPrice(store.shippingCents, store.currency)
+                          {shipping > 0
+                            ? formatPrice(shipping, store.currency)
                             : t("shippingFree")}
                         </span>
                       </div>

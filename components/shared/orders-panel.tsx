@@ -132,7 +132,10 @@ export function OrdersPanel({
     }
   }
 
-  async function transition(status: "paid" | "shipped" | "cancelled") {
+  async function transition(
+    status: "paid" | "shipped" | "cancelled",
+    reason?: string
+  ) {
     if (!selected) return;
     setUpdating(true);
     const previous = selected.status;
@@ -145,7 +148,7 @@ export function OrdersPanel({
     const res = await fetch(`/api/orders/${selected.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status }),
+      body: JSON.stringify({ status, reason }),
     });
     setUpdating(false);
     if (!res.ok) {
@@ -185,8 +188,10 @@ export function OrdersPanel({
     setHasMore(data.hasMore);
   }
 
+  // Interino V2: las transiciones de cocina viven en la comanda (V2-4);
+  // aquí solo cobro manual y cancelación.
   const canMarkPaid = selected?.status === "pending";
-  const canMarkShipped = selected?.status === "paid";
+  const canMarkShipped = false;
   const canCancel =
     selected?.status === "pending" || selected?.status === "paid";
 
@@ -394,7 +399,7 @@ export function OrdersPanel({
             </AlertDialogCancel>
             <AlertDialogAction
               className="rounded-full bg-destructive text-white hover:bg-destructive/90"
-              onClick={() => transition("cancelled")}
+              onClick={() => transition("cancelled", "Cancelado por la tienda")}
             >
               {t("confirmCancel")}
             </AlertDialogAction>

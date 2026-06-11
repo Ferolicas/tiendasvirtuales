@@ -15,3 +15,12 @@ export function emitToStore(
 ): void {
   getIO()?.to(`store:${storeId}`).emit(event, payload);
 }
+
+// Sala por pedido: el cliente sigue su pedido en /o/[id] en tiempo real.
+export function emitToOrder(
+  orderId: string,
+  event: string,
+  payload: unknown
+): void {
+  getIO()?.to(`order:${orderId}`).emit(event, payload);
+}

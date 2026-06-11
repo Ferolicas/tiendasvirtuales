@@ -45,7 +45,16 @@ export async function POST(req: Request) {
   if (!result.success) {
     return Response.json({ error: result.error.flatten() }, { status: 400 });
   }
-  const { storeId, customerName, customerEmail, items } = result.data;
+  const {
+    storeId,
+    customerName,
+    customerEmail,
+    customerPhone,
+    fulfillment,
+    deliveryAddress,
+    paymentMethod,
+    items,
+  } = result.data;
 
   const [store] = await db
     .select()
@@ -74,19 +83,26 @@ export async function POST(req: Request) {
     );
   }
 
+  if (fulfillment === "pickup" && !store.pickupEnabled) {
+    return Response.json({ error: "pickup_disabled" }, { status: 400 });
+  }
+
   const productById = new Map(found.map((p) => [p.id, p]));
   const itemsTotal = items.reduce(
     (sum, i) => sum + (productById.get(i.productId)?.priceCents ?? 0) * i.quantity,
     0
   );
-  const totalCents = itemsTotal + store.shippingCents;
+  // El envío solo aplica a domicilio.
+  const totalCents =
+    itemsTotal + (fulfillment === "delivery" ? store.shippingCents : 0);
 
   let order;
   try {
     order = await db.transaction(async (tx) => {
-      // Stock forzado: se descuenta de forma atómica; si no alcanza para
-      // alguna línea, el pedido entero se aborta.
+      // Stock forzado salvo «siempre disponible»: descuento atómico; si no
+      // alcanza para alguna línea, el pedido entero se aborta.
       for (const item of items) {
+        if (productById.get(item.productId)?.unlimitedStock) continue;
         const updated = await tx
           .update(products)
           .set({ stock: sql`${products.stock} - ${item.quantity}` })
@@ -104,7 +120,16 @@ export async function POST(req: Request) {
 
       const [created] = await tx
         .insert(orders)
-        .values({ storeId, customerName, customerEmail, totalCents })
+        .values({
+          storeId,
+          customerName,
+          customerEmail,
+          customerPhone,
+          fulfillment,
+          deliveryAddress: fulfillment === "delivery" ? deliveryAddress : null,
+          paymentMethod,
+          totalCents,
+        })
         .returning();
       await tx.insert(orderItems).values(
         items.map((i) => ({
@@ -128,8 +153,12 @@ export async function POST(req: Request) {
 
   emitToStore(storeId, "order:new", {
     id: order.id,
+    orderNumber: order.orderNumber,
     customerName: order.customerName,
     customerEmail: order.customerEmail,
+    customerPhone: order.customerPhone,
+    fulfillment: order.fulfillment,
+    paymentMethod: order.paymentMethod,
     totalCents: order.totalCents,
     status: order.status,
     createdAt: order.createdAt,
@@ -175,7 +204,7 @@ export async function POST(req: Request) {
   // Cobro con tarjeta vía Stripe Connect (cargo directo en la cuenta de la
   // tienda con comisión de plataforma según el plan del dueño).
   let checkoutUrl: string | null = null;
-  if (stripeConfigured() && store.stripeAccountId) {
+  if (paymentMethod === "card" && stripeConfigured() && store.stripeAccountId) {
     try {
       const [owner] = await db
         .select({ plan: users.plan })
@@ -195,7 +224,7 @@ export async function POST(req: Request) {
           },
         };
       });
-      if (store.shippingCents > 0) {
+      if (fulfillment === "delivery" && store.shippingCents > 0) {
         lineItems.push({
           quantity: 1,
           price_data: {
@@ -217,7 +246,8 @@ export async function POST(req: Request) {
             application_fee_amount: feeFor(owner?.plan ?? "free", totalCents),
             metadata: { orderId: order.id },
           },
-          success_url: `${appUrl}/s/${store.slug}?paid=1`,
+          // Tras pagar, el cliente cae en su página de seguimiento en vivo.
+          success_url: `${appUrl}/o/${order.id}`,
           cancel_url: `${appUrl}/s/${store.slug}?paid=0`,
         },
         { stripeAccount: store.stripeAccountId }
@@ -230,7 +260,15 @@ export async function POST(req: Request) {
   }
 
   return Response.json(
-    { order: { id: order.id, status: order.status }, checkoutUrl },
+    {
+      order: {
+        id: order.id,
+        orderNumber: order.orderNumber,
+        status: order.status,
+      },
+      trackUrl: `/o/${order.id}`,
+      checkoutUrl,
+    },
     { status: 201 }
   );
 }

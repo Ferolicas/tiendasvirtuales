@@ -1,4 +1,11 @@
-import { CheckCircle2, Clock, Truck, XCircle } from "lucide-react";
+import {
+  CheckCheck,
+  CheckCircle2,
+  ChefHat,
+  Clock,
+  Truck,
+  XCircle,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 
@@ -15,10 +22,26 @@ const STATUS_STYLES = {
     className:
       "bg-green-600/12 text-green-700 dark:bg-green-400/15 dark:text-green-300",
   },
-  shipped: {
+  preparing: {
+    icon: ChefHat,
+    className:
+      "bg-orange-500/12 text-orange-700 dark:bg-orange-400/15 dark:text-orange-300",
+  },
+  ready: {
     icon: Truck,
     className:
-      "bg-sky-500/12 text-sky-700 dark:bg-sky-400/15 dark:text-sky-300",
+      "bg-violet-500/12 text-violet-700 dark:bg-violet-400/15 dark:text-violet-300",
+  },
+  delivered: {
+    icon: CheckCheck,
+    className:
+      "bg-emerald-600/12 text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-300",
+  },
+  // Legado v1: visualmente igual que entregado.
+  shipped: {
+    icon: CheckCheck,
+    className:
+      "bg-emerald-600/12 text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-300",
   },
   cancelled: {
     icon: XCircle,

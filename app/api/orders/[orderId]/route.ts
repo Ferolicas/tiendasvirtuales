@@ -1,17 +1,21 @@
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { orderItems, orders, products, stores } from "@/lib/db/schema";
 import { rateLimit, clientIdentifier } from "@/lib/rate-limit";
-import { emitToStore } from "@/lib/realtime";
+import { emitToOrder, emitToStore } from "@/lib/realtime";
 
-// Transiciones permitidas del ciclo de vida de un pedido. «paid» también
-// lo marca Stripe vía webhook; aquí el dueño puede registrarlo a mano
-// (cobro en efectivo) además de enviar o cancelar.
+// Ciclo v2 de la comanda: pending (sin pagar) → paid (entrante) →
+// preparing (aceptado) → ready (en reparto / listo) → delivered.
+// Los pedidos «pagar en tienda» pueden aceptarse aún pendientes de cobro.
+// Cancelar: en todas las fases menos en reparto (regla del fundador).
 const TRANSITIONS: Record<string, string[]> = {
-  pending: ["paid", "cancelled"],
-  paid: ["shipped", "cancelled"],
+  pending: ["paid", "preparing", "cancelled"],
+  paid: ["preparing", "cancelled"],
+  preparing: ["ready", "cancelled"],
+  ready: ["delivered"],
+  delivered: [],
   shipped: [],
   cancelled: [],
 };
@@ -56,9 +60,15 @@ export async function GET(
   return Response.json({ order, items });
 }
 
-const patchSchema = z.object({
-  status: z.enum(["paid", "shipped", "cancelled"]),
-});
+const patchSchema = z
+  .object({
+    status: z.enum(["paid", "preparing", "ready", "delivered", "cancelled"]),
+    reason: z.string().min(3).max(300).optional(),
+  })
+  .refine((o) => o.status !== "cancelled" || Boolean(o.reason), {
+    message: "reason_required",
+    path: ["reason"],
+  });
 
 export async function PATCH(
   req: Request,
@@ -84,38 +94,71 @@ export async function PATCH(
   const order = await loadOwnedOrder(orderId, session.user.id);
   if (!order) return new Response("Not Found", { status: 404 });
 
-  if (!TRANSITIONS[order.status]?.includes(result.data.status)) {
+  const target = result.data.status;
+  if (!TRANSITIONS[order.status]?.includes(target)) {
+    return Response.json({ error: "invalid_transition" }, { status: 409 });
+  }
+  // Aceptar sin cobrar solo aplica a «pagar en tienda».
+  if (
+    order.status === "pending" &&
+    target === "preparing" &&
+    order.paymentMethod !== "in_store"
+  ) {
     return Response.json({ error: "invalid_transition" }, { status: 409 });
   }
 
+  const now = new Date();
+  const patch: Partial<typeof orders.$inferInsert> = { status: target };
+  if (target === "preparing") patch.acceptedAt = now;
+  if (target === "ready") patch.readyAt = now;
+  if (target === "delivered") patch.deliveredAt = now;
+  if (target === "cancelled") patch.cancelReason = result.data.reason;
+
   const [updated] = await db.transaction(async (tx) => {
-    // Al cancelar, el stock de las líneas vuelve al catálogo.
-    if (result.data.status === "cancelled") {
-      const lines = await tx
-        .select({
-          productId: orderItems.productId,
-          quantity: orderItems.quantity,
-        })
-        .from(orderItems)
-        .where(eq(orderItems.orderId, orderId));
+    const lines = await tx
+      .select({
+        productId: orderItems.productId,
+        quantity: orderItems.quantity,
+      })
+      .from(orderItems)
+      .where(eq(orderItems.orderId, orderId));
+
+    // Al cancelar, el stock vuelve; al entregar, suma ventas por producto.
+    if (target === "cancelled") {
       for (const line of lines) {
         await tx
           .update(products)
           .set({ stock: sql`${products.stock} + ${line.quantity}` })
+          .where(
+            and(eq(products.id, line.productId), eq(products.unlimitedStock, false))
+          );
+      }
+    }
+    if (target === "delivered") {
+      for (const line of lines) {
+        await tx
+          .update(products)
+          .set({ salesCount: sql`${products.salesCount} + ${line.quantity}` })
           .where(eq(products.id, line.productId));
       }
     }
+
     return tx
       .update(orders)
-      .set({ status: result.data.status })
+      .set(patch)
       .where(eq(orders.id, orderId))
       .returning();
   });
 
-  emitToStore(updated.storeId, "order:update", {
+  const event = {
     id: updated.id,
     status: updated.status,
-  });
+    acceptedAt: updated.acceptedAt,
+    readyAt: updated.readyAt,
+    deliveredAt: updated.deliveredAt,
+  };
+  emitToStore(updated.storeId, "order:update", event);
+  emitToOrder(updated.id, "order:update", event);
 
   return Response.json({ order: updated });
 }

@@ -22,6 +22,11 @@ app.prepare().then(() => {
         socket.join(`store:${storeId}`);
       }
     });
+    socket.on("order:join", (orderId: unknown) => {
+      if (typeof orderId === "string" && orderId.length <= 64) {
+        socket.join(`order:${orderId}`);
+      }
+    });
   });
 
   httpServer.listen(port, () => {
