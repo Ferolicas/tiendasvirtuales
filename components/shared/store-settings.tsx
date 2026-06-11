@@ -273,7 +273,7 @@ export function DomainCard({
       {/* Guía de compra en Cloudflare (modal de 3 pasos) */}
       <Drawer open={guideOpen} onOpenChange={setGuideOpen}>
         <DrawerContent>
-          <div className="mx-auto w-full max-w-md pb-8">
+          <div className="mx-auto w-full min-h-0 max-w-md flex-1 overflow-y-auto pb-8">
             <DrawerHeader>
               <DrawerTitle className="tracking-tight">
                 {t("buyGuideTitle")}

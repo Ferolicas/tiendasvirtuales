@@ -326,7 +326,7 @@ export function StoresManager({
         }}
       >
         <DrawerContent className="max-h-[92dvh]">
-          <div className="mx-auto w-full max-w-lg overflow-y-auto pb-8">
+          <div className="mx-auto w-full min-h-0 max-w-lg flex-1 overflow-y-auto pb-8">
             <DrawerHeader>
               <DrawerTitle className="tracking-tight">
                 {editing === "new" ? t("createStoreCta") : t("editStoreCta")}

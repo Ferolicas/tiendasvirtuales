@@ -604,7 +604,7 @@ export function ComandaBoard({
       >
         <DrawerContent className="max-h-[92dvh]">
           {detailOrder ? (
-            <div className="mx-auto w-full max-w-md overflow-y-auto pb-8">
+            <div className="mx-auto w-full min-h-0 max-w-md flex-1 overflow-y-auto pb-8">
               <DrawerHeader>
                 <DrawerTitle className="flex items-center justify-between gap-3 tracking-tight">
                   {t("detailTitle")} · #{detailOrder.orderNumber}

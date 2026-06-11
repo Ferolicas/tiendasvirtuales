@@ -536,7 +536,7 @@ function ProductDetailDrawer({
       }}
     >
       <DrawerContent>
-        <div className="mx-auto w-full max-w-md pb-8">
+        <div className="mx-auto w-full min-h-0 max-w-md flex-1 overflow-y-auto pb-8">
           <div className="relative mx-4 mt-2 aspect-[4/3] overflow-hidden rounded-2xl">
             <ProductImage product={product} sizes="448px" />
           </div>
@@ -730,7 +730,7 @@ function ActiveOrderBar({
         }}
       >
         <DrawerContent className="max-h-[92dvh]">
-          <div className="mx-auto w-full max-w-md overflow-y-auto px-4 pb-10 pt-6">
+          <div className="mx-auto w-full min-h-0 max-w-md flex-1 overflow-y-auto px-4 pb-10 pt-6">
             <TrackOrder
               order={{
                 id: data.id,
@@ -855,7 +855,7 @@ function CartDrawer({
       }}
     >
       <DrawerContent className="max-h-[92dvh]">
-        <div className="mx-auto w-full max-w-md overflow-y-auto pb-8">
+        <div className="mx-auto w-full min-h-0 max-w-md flex-1 overflow-y-auto pb-8">
           {step === "done" && done ? (
             <div className="hero-glow px-6 py-10 text-center">
               <p className="mx-auto mb-4 flex size-12 items-center justify-center rounded-2xl bg-brand/10">

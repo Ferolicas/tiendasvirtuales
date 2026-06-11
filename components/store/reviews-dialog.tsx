@@ -57,7 +57,7 @@ export function ReviewsDialog({
 
       <Drawer open={open} onOpenChange={setOpen}>
         <DrawerContent className="max-h-[85dvh]">
-          <div className="mx-auto w-full max-w-md overflow-y-auto pb-8">
+          <div className="mx-auto w-full min-h-0 max-w-md flex-1 overflow-y-auto pb-8">
             <DrawerHeader>
               <DrawerTitle className="flex items-center gap-2 tracking-tight">
                 <Star className="size-5 fill-amber-400 text-amber-400" />
