@@ -1,9 +1,12 @@
+import { unlink } from "node:fs/promises";
+import path from "node:path";
 import { and, eq, isNull } from "drizzle-orm";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { stores } from "@/lib/db/schema";
 import { rateLimit, clientIdentifier } from "@/lib/rate-limit";
+import { UPLOAD_DIR } from "@/lib/storage";
 import { imageUrlSchema } from "@/lib/validations/product";
 
 const updateStoreSchema = z.object({
@@ -31,7 +34,11 @@ export async function PATCH(
 
   const { storeId } = await params;
   const [store] = await db
-    .select({ id: stores.id, ownerId: stores.ownerId })
+    .select({
+      id: stores.id,
+      ownerId: stores.ownerId,
+      logoUrl: stores.logoUrl,
+    })
     .from(stores)
     .where(and(eq(stores.id, storeId), isNull(stores.deletedAt)))
     .limit(1);
@@ -51,6 +58,22 @@ export async function PATCH(
     .set(result.data)
     .where(eq(stores.id, storeId))
     .returning();
+
+  // Un logo nuevo deja huérfano al anterior en disco: se borra (solo si
+  // era local y realmente cambió).
+  const oldLogo = store.logoUrl;
+  if (
+    result.data.logoUrl !== undefined &&
+    oldLogo &&
+    oldLogo !== result.data.logoUrl &&
+    oldLogo.startsWith("/api/files/")
+  ) {
+    const key = oldLogo.replace("/api/files/", "");
+    const target = path.normalize(path.join(UPLOAD_DIR, key));
+    if (target.startsWith(UPLOAD_DIR + path.sep)) {
+      await unlink(target).catch(() => {});
+    }
+  }
 
   return Response.json({ store: updated });
 }

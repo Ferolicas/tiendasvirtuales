@@ -47,7 +47,7 @@ export async function generateMetadata({
     },
     other: {
       // Verificación del programa de afiliados (Impact / Namecheap).
-      "impact-site-verification": "3a220a16-92bc-4dad-8d4e-691723faa3e0",
+      "impact-site-verification": "e155f541-9fac-4c9e-9cce-aa3e83c2d539",
     },
   };
 }
