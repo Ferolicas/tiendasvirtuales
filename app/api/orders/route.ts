@@ -154,14 +154,22 @@ export async function POST(req: Request) {
   emitToStore(storeId, "order:new", {
     id: order.id,
     orderNumber: order.orderNumber,
+    storeId: order.storeId,
     customerName: order.customerName,
     customerEmail: order.customerEmail,
     customerPhone: order.customerPhone,
     fulfillment: order.fulfillment,
+    deliveryAddress: order.deliveryAddress,
     paymentMethod: order.paymentMethod,
     totalCents: order.totalCents,
     status: order.status,
     createdAt: order.createdAt,
+    acceptedAt: null,
+    readyAt: null,
+    lines: items.map((i) => ({
+      name: productById.get(i.productId)?.name ?? "Producto",
+      quantity: i.quantity,
+    })),
   });
 
   // Emails de pedido (comprador + dueño) en segundo plano: no retrasan la

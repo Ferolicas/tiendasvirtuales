@@ -5,6 +5,7 @@ import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { LocaleSwitcher } from "@/components/shared/locale-switcher";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
+import { MasterTabs } from "@/components/dashboard/master-tabs";
 
 export default async function DashboardLayout({
   children,
@@ -47,7 +48,10 @@ export default async function DashboardLayout({
           </div>
         </div>
       </header>
-      <main className="mx-auto w-full max-w-6xl flex-1 px-5 py-10 sm:px-6">
+      <div className="mx-auto w-full max-w-6xl px-5 pt-6 sm:px-6">
+        <MasterTabs />
+      </div>
+      <main className="mx-auto w-full max-w-6xl flex-1 px-5 py-8 sm:px-6">
         {children}
       </main>
     </div>
