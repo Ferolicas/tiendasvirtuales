@@ -1,17 +1,25 @@
-import { desc, isNull } from "drizzle-orm";
+import { desc, inArray, isNull, sql } from "drizzle-orm";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { db } from "@/lib/db";
-import { stores } from "@/lib/db/schema";
+import { orders, products, reviews, stores } from "@/lib/db/schema";
 import { Button } from "@/components/ui/button";
 import { LocaleSwitcher } from "@/components/shared/locale-switcher";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { VendiDot } from "@/components/shared/vendi-dot";
 import { ExploreGrid } from "@/components/store/explore-grid";
 
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata() {
   const t = await getTranslations("explore");
   return { title: t("title"), description: t("subtitle") };
+}
+
+// Redondeo amable para estimaciones: al múltiplo de 5 más cercano, mínimo 5.
+function roundEstimate(minutes: number | null): number | null {
+  if (minutes === null || !Number.isFinite(minutes)) return null;
+  return Math.max(5, Math.round(minutes / 5) * 5);
 }
 
 // Directorio público de tiendas: la cara «marketplace» de Vendi (y la
@@ -26,6 +34,113 @@ export default async function ExplorePage() {
     .where(isNull(stores.deletedAt))
     .orderBy(desc(stores.ratingSum), desc(stores.createdAt))
     .limit(100);
+
+  const ids = list.map((s) => s.id);
+
+  // Promedios reales por tienda: minutos de cada fase (espera → preparación
+  // → reparto) sobre pedidos completados, y ticket medio de pedidos cobrados.
+  const orderStats = ids.length
+    ? await db
+        .select({
+          storeId: orders.storeId,
+          waitMin: sql<
+            string | null
+          >`avg(extract(epoch from (${orders.acceptedAt} - ${orders.createdAt})) / 60)`,
+          prepMin: sql<
+            string | null
+          >`avg(extract(epoch from (${orders.readyAt} - ${orders.acceptedAt})) / 60)`,
+          deliverMin: sql<
+            string | null
+          >`avg(extract(epoch from (${orders.deliveredAt} - ${orders.readyAt})) / 60) filter (where ${orders.fulfillment} = 'delivery')`,
+          avgTicket: sql<
+            string | null
+          >`avg(${orders.totalCents}) filter (where ${orders.status} in ('paid','preparing','ready','delivered','shipped'))`,
+        })
+        .from(orders)
+        .where(inArray(orders.storeId, ids))
+        .groupBy(orders.storeId)
+    : [];
+  const statsByStore = new Map(orderStats.map((s) => [s.storeId, s]));
+
+  // Fallback de ticket medio para tiendas aún sin ventas: media de los
+  // precios de sus productos activos.
+  const priceStats = ids.length
+    ? await db
+        .select({
+          storeId: products.storeId,
+          avgPrice: sql<string | null>`avg(${products.priceCents})`,
+        })
+        .from(products)
+        .where(inArray(products.storeId, ids))
+        .groupBy(products.storeId)
+    : [];
+  const priceByStore = new Map(priceStats.map((s) => [s.storeId, s.avgPrice]));
+
+  // Últimas reseñas (modal de la tarjeta); se agrupan por tienda en memoria.
+  const latestReviews = ids.length
+    ? await db
+        .select()
+        .from(reviews)
+        .where(inArray(reviews.storeId, ids))
+        .orderBy(desc(reviews.createdAt))
+        .limit(300)
+    : [];
+  const reviewsByStore = new Map<string, typeof latestReviews>();
+  for (const review of latestReviews) {
+    const bucket = reviewsByStore.get(review.storeId) ?? [];
+    if (bucket.length < 12) bucket.push(review);
+    reviewsByStore.set(review.storeId, bucket);
+  }
+
+  const cards = list.map((store) => {
+    const stats = statsByStore.get(store.id);
+    const wait = stats?.waitMin ? Number(stats.waitMin) : null;
+    const prep = stats?.prepMin ? Number(stats.prepMin) : null;
+    const deliver = stats?.deliverMin ? Number(stats.deliverMin) : null;
+    const avgPrice = priceByStore.get(store.id);
+    const ticket = stats?.avgTicket
+      ? Number(stats.avgTicket)
+      : avgPrice
+        ? Number(avgPrice)
+        : null;
+
+    return {
+      slug: store.slug,
+      name: store.name,
+      description: store.description,
+      logoUrl: store.logoUrl,
+      bannerUrl:
+        store.bannerUrl ??
+        (store.bannerPreset ? `/banners/${store.bannerPreset}.svg` : null),
+      storeCategory: store.storeCategory,
+      schedule: store.schedule,
+      phone: store.phone,
+      address: store.address,
+      city: store.city,
+      latitude: store.latitude,
+      longitude: store.longitude,
+      pickupEnabled: store.pickupEnabled,
+      currency: store.currency,
+      ratingAvg:
+        store.ratingCount > 0 ? store.ratingSum / store.ratingCount : null,
+      ratingCount: store.ratingCount,
+      reviews: (reviewsByStore.get(store.id) ?? []).map((r) => ({
+        rating: r.rating,
+        comment: r.comment,
+        customerName: r.customerName,
+        createdAt: r.createdAt.toISOString(),
+      })),
+      // Domicilio = espera + preparación + reparto; recogida = espera +
+      // preparación. Solo se muestran cuando hay historial suficiente.
+      deliveryEstMin:
+        wait !== null && prep !== null
+          ? roundEstimate(wait + prep + (deliver ?? 0))
+          : null,
+      pickupEstMin:
+        wait !== null && prep !== null ? roundEstimate(wait + prep) : null,
+      avgTicketCents: ticket !== null ? Math.round(ticket) : null,
+    };
+  });
 
   return (
     <main className="flex-1">
@@ -53,25 +168,7 @@ export default async function ExplorePage() {
           {t("subtitle")}
         </p>
         <div className="mt-8">
-          <ExploreGrid
-            stores={list.map((store) => ({
-              slug: store.slug,
-              name: store.name,
-              description: store.description,
-              logoUrl: store.logoUrl,
-              bannerUrl:
-                store.bannerUrl ??
-                (store.bannerPreset
-                  ? `/banners/${store.bannerPreset}.svg`
-                  : null),
-              storeCategory: store.storeCategory,
-              rating:
-                store.ratingCount > 0
-                  ? (store.ratingSum / store.ratingCount).toFixed(1)
-                  : null,
-              ratingCount: store.ratingCount,
-            }))}
-          />
+          <ExploreGrid stores={cards} />
         </div>
       </section>
     </main>

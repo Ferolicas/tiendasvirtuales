@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import {
   CreditCard,
   Loader2,
+  MapPin,
   Pencil,
   Plus,
   Store as StoreIcon,
@@ -66,6 +67,9 @@ export interface ManagedStore {
   schedule: string | null;
   phone: string | null;
   address: string | null;
+  city: string | null;
+  latitude: number | null;
+  longitude: number | null;
   pickupEnabled: boolean;
   legalName: string | null;
   legalTaxId: string | null;
@@ -116,6 +120,10 @@ export function StoresManager({
   const [customBanner, setCustomBanner] = useState(false);
   const [pickup, setPickup] = useState(false);
   const [category, setCategory] = useState<string>("moda");
+  // Coordenadas para «cerca de mí» en Explorar (se capturan con el botón
+  // de ubicación, nunca se escriben a mano).
+  const [geo, setGeo] = useState<{ lat: number; lng: number } | null>(null);
+  const [locating, setLocating] = useState(false);
 
   function openModal(store: ManagedStore | "new") {
     setEditing(store);
@@ -124,6 +132,31 @@ export function StoresManager({
     setPickup(store === "new" ? false : store.pickupEnabled);
     setCategory(
       store === "new" ? "moda" : (store.storeCategory ?? "moda")
+    );
+    setGeo(
+      store !== "new" && store.latitude !== null && store.longitude !== null
+        ? { lat: store.latitude, lng: store.longitude }
+        : null
+    );
+  }
+
+  function captureLocation() {
+    if (!("geolocation" in navigator)) {
+      toast.error(t("locationFailed"));
+      return;
+    }
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setGeo({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setLocating(false);
+        toast.success(t("locationSet"));
+      },
+      () => {
+        setLocating(false);
+        toast.error(t("locationFailed"));
+      },
+      { enableHighAccuracy: true, timeout: 10_000 }
     );
   }
 
@@ -165,6 +198,9 @@ export function StoresManager({
       schedule: String(form.get("schedule") ?? "") || undefined,
       phone: String(form.get("phone") ?? "") || undefined,
       address: String(form.get("address") ?? "") || undefined,
+      city: String(form.get("city") ?? "") || undefined,
+      latitude: geo?.lat ?? null,
+      longitude: geo?.lng ?? null,
       pickupEnabled: pickup,
       legalName: String(form.get("legalName") ?? "") || undefined,
       legalTaxId: String(form.get("legalTaxId") ?? "") || undefined,
@@ -559,6 +595,37 @@ export function StoresManager({
                   />
                 </div>
               </div>
+              <div className="grid grid-cols-2 items-end gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="st-city">{t("cityLabel")}</Label>
+                  <Input
+                    id="st-city"
+                    name="city"
+                    defaultValue={current?.city ?? ""}
+                    placeholder={t("cityPlaceholder")}
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={locating}
+                  onClick={captureLocation}
+                  className="rounded-full"
+                >
+                  {locating ? (
+                    <Loader2 className="size-3.5 animate-spin" />
+                  ) : (
+                    <MapPin
+                      className={`size-3.5 ${geo ? "text-green-600" : ""}`}
+                    />
+                  )}
+                  {geo ? t("locationSaved") : t("useMyLocation")}
+                </Button>
+              </div>
+              <p className="-mt-2 text-xs font-light text-muted-foreground">
+                {t("locationHint")}
+              </p>
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="st-legal">{t("responsibleLabel")}</Label>

@@ -45,6 +45,13 @@ export async function generateMetadata({
       siteName: "Vendi",
       locale,
     },
+    // Sin esto iOS abre el icono de pantalla de inicio en Safari normal
+    // (no standalone) y las notificaciones push no están disponibles.
+    appleWebApp: {
+      capable: true,
+      title: "Vendi",
+      statusBarStyle: "default",
+    },
     other: {
       // Verificación del programa de afiliados (Impact / Namecheap).
       "impact-site-verification": "e155f541-9fac-4c9e-9cce-aa3e83c2d539",

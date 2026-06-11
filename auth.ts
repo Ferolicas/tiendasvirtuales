@@ -6,8 +6,14 @@ import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { loginSchema } from "@/lib/validations/auth";
 
+// Sesión de 30 días con expiración EXPLÍCITA en la cookie: sin esto algunos
+// navegadores (Safari/PWA sobre todo) la tratan como cookie de sesión y la
+// borran al cerrar, obligando a re-loguear.
+const THIRTY_DAYS = 30 * 24 * 60 * 60;
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  session: { strategy: "jwt" },
+  session: { strategy: "jwt", maxAge: THIRTY_DAYS, updateAge: 24 * 60 * 60 },
+  jwt: { maxAge: THIRTY_DAYS },
   pages: { signIn: "/login" },
   providers: [
     Credentials({

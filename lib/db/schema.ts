@@ -5,6 +5,7 @@ import {
   text,
   integer,
   boolean,
+  doublePrecision,
   timestamp,
 } from "drizzle-orm/pg-core";
 
@@ -91,6 +92,11 @@ export const stores = pgTable("stores", {
   schedule: text("schedule"),
   phone: text("phone"),
   address: text("address"),
+  // Ubicación para el marketplace: ciudad (filtro) y coordenadas
+  // opcionales (orden por cercanía).
+  city: text("city"),
+  latitude: doublePrecision("latitude"),
+  longitude: doublePrecision("longitude"),
   pickupEnabled: boolean("pickup_enabled").notNull().default(false),
   // Media de reseñas desnormalizada para la cabecera
   ratingSum: integer("rating_sum").notNull().default(0),

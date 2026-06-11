@@ -1,0 +1,118 @@
+// Heurística para interpretar el horario en texto libre de las tiendas
+// ("L-V 9:00-20:00", "Lun a Vie 9:00-14:00 y 17:00-20:00; Sáb 10:00-14:00")
+// y saber si está abierta ahora. Devuelve null si el texto no es parseable:
+// en ese caso el marketplace no afirma ni abierto ni cerrado.
+
+const DAY_TOKENS: Array<[RegExp, number]> = [
+  [/^(lunes|lun|monday|mon|l)$/i, 0],
+  [/^(martes|mar|tuesday|tue|m)$/i, 1],
+  [/^(mi[eé]rcoles|mi[eé]|wednesday|wed|x)$/i, 2],
+  [/^(jueves|jue|thursday|thu|j)$/i, 3],
+  [/^(viernes|vie|friday|fri|v)$/i, 4],
+  [/^(s[aá]bados?|s[aá]b|saturday|sat|s)$/i, 5],
+  [/^(domingos?|dom|sunday|sun|d)$/i, 6],
+];
+
+const ALL_DAYS = [0, 1, 2, 3, 4, 5, 6];
+
+function dayIndexOf(token: string): number | null {
+  for (const [re, idx] of DAY_TOKENS) {
+    if (re.test(token)) return idx;
+  }
+  return null;
+}
+
+// Días a los que aplica una línea: rango ("L-V", "lunes a viernes"),
+// lista ("Sáb, Dom") o todos si no menciona ninguno.
+function parseDays(line: string): number[] {
+  const beforeTimes = line.split(/\d/)[0] ?? line;
+  const tokens = beforeTimes.split(/[\s,;.·/]+|[-–—]/).filter(Boolean);
+  const days: number[] = [];
+  for (const token of tokens) {
+    const idx = dayIndexOf(token);
+    if (idx !== null && !days.includes(idx)) days.push(idx);
+  }
+  if (days.length === 0) return ALL_DAYS;
+
+  const isRange =
+    days.length === 2 &&
+    /[a-záé]\s*([-–—]|\ba\b|\bto\b)\s*[a-záé]/i.test(beforeTimes);
+  if (isRange) {
+    const [from, to] = days;
+    const expanded: number[] = [];
+    for (let d = from; ; d = (d + 1) % 7) {
+      expanded.push(d);
+      if (d === to) break;
+    }
+    return expanded;
+  }
+  return days;
+}
+
+// Rangos horarios en minutos desde medianoche: "9:00-20:00", "9.30 a 14h".
+function parseTimeRanges(line: string): Array<[number, number]> {
+  const re =
+    /(\d{1,2})(?:[:.h](\d{2}))?\s*(?:[-–—]|\ba\b|\bto\b)\s*(\d{1,2})(?:[:.h](\d{2}))?/g;
+  const ranges: Array<[number, number]> = [];
+  for (const m of line.matchAll(re)) {
+    const h1 = Number(m[1]);
+    const m1 = Number(m[2] ?? 0);
+    const h2 = Number(m[3]);
+    const m2 = Number(m[4] ?? 0);
+    if (h1 > 24 || h2 > 24 || m1 > 59 || m2 > 59) continue;
+    ranges.push([h1 * 60 + m1, h2 * 60 + m2]);
+  }
+  return ranges;
+}
+
+export function isOpenNow(
+  schedule: string | null | undefined,
+  now: Date = new Date()
+): boolean | null {
+  if (!schedule?.trim()) return null;
+
+  const today = (now.getDay() + 6) % 7; // 0 = lunes
+  const minutes = now.getHours() * 60 + now.getMinutes();
+  const lines = schedule.split(/\n|;|·|\|/).filter((l) => l.trim());
+
+  let parsedAny = false;
+
+  for (const line of lines) {
+    const days = parseDays(line);
+    if (/cerrad[oa]|closed/i.test(line)) {
+      parsedAny = true;
+      if (days.includes(today)) return false;
+      continue;
+    }
+    const ranges = parseTimeRanges(line);
+    if (ranges.length === 0) continue;
+    parsedAny = true;
+    if (!days.includes(today)) continue;
+    for (const [start, end] of ranges) {
+      const open =
+        end <= start
+          ? minutes >= start || minutes < end // cruza medianoche
+          : minutes >= start && minutes < end;
+      if (open) return true;
+    }
+  }
+
+  // Hubo horario parseable pero ningún rango cubre este momento.
+  return parsedAny ? false : null;
+}
+
+// Distancia en línea recta entre dos coordenadas (fórmula de haversine).
+export function distanceKm(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+): number {
+  const rad = Math.PI / 180;
+  const dLat = (lat2 - lat1) * rad;
+  const dLon = (lon2 - lon1) * rad;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * rad) * Math.cos(lat2 * rad) * Math.sin(dLon / 2) ** 2;
+  return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
