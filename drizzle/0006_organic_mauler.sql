@@ -1,0 +1,1 @@
+ALTER TYPE "public"."order_status" ADD VALUE 'archived' BEFORE 'shipped';

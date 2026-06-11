@@ -68,11 +68,32 @@ export async function sendPasswordResetEmail(to: string, url: string) {
 
 export interface OrderEmailData {
   storeName: string;
+  storeLogoUrl: string | null;
   reference: string;
+  trackUrl: string;
+  fulfillment: "delivery" | "pickup";
   lines: { name: string; quantity: number; totalFormatted: string }[];
   shippingFormatted: string | null;
   totalFormatted: string;
   customerName: string;
+}
+
+// Cabecera de marca DE LA TIENDA (el email lo envía Vendi, pero el cliente
+// ve el logo y nombre del comercio). Pie discreto de Vendi.
+function storeLayout(data: OrderEmailData, body: string): string {
+  const appUrl = process.env.APP_URL ?? "https://vendi.olcas.app";
+  const logo = data.storeLogoUrl
+    ? `<img src="${data.storeLogoUrl.startsWith("http") ? data.storeLogoUrl : appUrl + data.storeLogoUrl}" alt="" width="56" height="56" style="border-radius:16px;object-fit:cover;display:block"/>`
+    : `<div style="width:56px;height:56px;border-radius:16px;background:#fdeae3;color:#b14328;font-size:26px;font-weight:800;text-align:center;line-height:56px">${data.storeName.charAt(0).toUpperCase()}</div>`;
+  return `
+  <div style="font-family:system-ui,-apple-system,sans-serif;max-width:520px;margin:0 auto;padding:32px 24px;color:#1c1917">
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:24px">
+      ${logo}
+      <span style="font-size:20px;font-weight:800">${data.storeName}</span>
+    </div>
+    ${body}
+    <p style="font-size:11px;color:#a8a29e;margin-top:32px">Enviado con vendi<span style="color:#e0563f">●</span> · vendi.olcas.app</p>
+  </div>`;
 }
 
 function orderTable(data: OrderEmailData): string {
@@ -102,16 +123,45 @@ export async function sendOrderConfirmationEmail(
   to: string,
   data: OrderEmailData
 ) {
+  const appUrl = process.env.APP_URL ?? "https://vendi.olcas.app";
   await send(
     to,
     `Tu pedido en ${data.storeName} · Ref ${data.reference}`,
-    layout(`
-      <h1 style="font-size:18px">¡Pedido confirmado! · Order confirmed!</h1>
-      <p style="font-size:13px;color:#78716c;text-transform:uppercase;letter-spacing:0.1em;margin:4px 0 0">Ref · ${data.reference}</p>
-      <p style="font-size:14px;line-height:1.6;margin-top:16px">Hola ${data.customerName}: <strong>${data.storeName}</strong> ha recibido tu pedido y se pondrá en contacto contigo.<br/>
-      <span style="color:#78716c">${data.storeName} received your order and will get in touch with you.</span></p>
+    storeLayout(
+      data,
+      `
+      <h1 style="font-size:18px">¡Pedido confirmado!</h1>
+      <p style="font-size:13px;color:#78716c;text-transform:uppercase;letter-spacing:0.1em;margin:4px 0 0">Pedido · ${data.reference}</p>
+      <p style="font-size:14px;line-height:1.6;margin-top:16px">Hola ${data.customerName}: <strong>${data.storeName}</strong> ha recibido tu pedido con éxito y pronto estará en preparación.</p>
       ${orderTable(data)}
-    `)
+      <a href="${appUrl}${data.trackUrl}" style="display:inline-block;background:#1c1917;color:#fff;padding:12px 24px;border-radius:999px;text-decoration:none;font-size:14px">Seguir mi pedido en vivo</a>
+    `
+    )
+  );
+}
+
+// Segundo (y último) email al cliente: su pedido salió de cocina.
+export async function sendOrderReadyEmail(to: string, data: OrderEmailData) {
+  const appUrl = process.env.APP_URL ?? "https://vendi.olcas.app";
+  const pickup = data.fulfillment === "pickup";
+  await send(
+    to,
+    pickup
+      ? `¡Tu pedido de ${data.storeName} está listo para recoger!`
+      : `¡Tu pedido de ${data.storeName} va en camino!`,
+    storeLayout(
+      data,
+      `
+      <h1 style="font-size:18px">${pickup ? "¡Tu pedido está listo! 🛍️" : "¡Tu pedido va en camino! 🛵"}</h1>
+      <p style="font-size:13px;color:#78716c;text-transform:uppercase;letter-spacing:0.1em;margin:4px 0 0">Pedido · ${data.reference}</p>
+      <p style="font-size:14px;line-height:1.6;margin-top:16px">Hola ${data.customerName}: ${
+        pickup
+          ? `tu pedido ya está preparado, pásate por <strong>${data.storeName}</strong> a recogerlo cuando quieras.`
+          : `tu pedido acaba de salir en reparto y llegará muy pronto.`
+      }</p>
+      <a href="${appUrl}${data.trackUrl}" style="display:inline-block;background:#1c1917;color:#fff;padding:12px 24px;border-radius:999px;text-decoration:none;font-size:14px;margin-top:8px">Seguir mi pedido en vivo</a>
+    `
+    )
   );
 }
 

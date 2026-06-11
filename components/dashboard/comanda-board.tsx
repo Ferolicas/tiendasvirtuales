@@ -12,8 +12,10 @@ import {
   Inbox,
   MapPin,
   Phone,
+  Star,
   Store as StoreIcon,
   Timer,
+  Trash2,
   TrendingUp,
   Wallet,
   XCircle,
@@ -61,6 +63,7 @@ export interface ComandaOrder {
   readyAt: string | null;
   deliveredAt: string | null;
   lines: { name: string; quantity: number }[];
+  review: { rating: number; comment: string | null } | null;
 }
 
 interface Kpis {
@@ -160,7 +163,17 @@ export function ComandaBoard({
       setOrders((prev) =>
         prev.some((o) => o.id === order.id)
           ? prev
-          : [{ ...order, lines: order.lines ?? [], storeName: "", cancelReason: null, deliveredAt: null }, ...prev]
+          : [
+              {
+                ...order,
+                lines: order.lines ?? [],
+                storeName: "",
+                cancelReason: null,
+                deliveredAt: null,
+                review: null,
+              },
+              ...prev,
+            ]
       );
       toast.success(`#${order.orderNumber} · ${order.customerName}`);
     });
@@ -239,7 +252,7 @@ export function ComandaBoard({
 
   async function transition(
     order: ComandaOrder,
-    status: "preparing" | "ready" | "delivered" | "cancelled",
+    status: "preparing" | "ready" | "delivered" | "cancelled" | "archived",
     reason?: string
   ) {
     const previous = order.status;
@@ -269,7 +282,26 @@ export function ComandaBoard({
         prev.map((o) => (o.id === order.id ? { ...o, status: previous } : o))
       );
       toast.error(tDash("orderUpdateFailed"));
+      return;
     }
+    if (status === "archived") toast.success(t("archivedToast"));
+  }
+
+  async function deleteReview(order: ComandaOrder) {
+    const res = await fetch(`/api/orders/${order.id}/review`, {
+      method: "DELETE",
+    });
+    if (!res.ok) {
+      toast.error(tDash("orderUpdateFailed"));
+      return;
+    }
+    setOrders((prev) =>
+      prev.map((o) => (o.id === order.id ? { ...o, review: null } : o))
+    );
+    setDetailOrder((prev) =>
+      prev && prev.id === order.id ? { ...prev, review: null } : prev
+    );
+    toast.success(t("reviewDeleted"));
   }
 
   const fmtMoney = (v: number) => formatPrice(Math.round(v), currency);
@@ -506,14 +538,23 @@ export function ComandaBoard({
           )
             .slice(0, 30)
             .map((order) => (
-              <button
+              <div
                 key={order.id}
-                type="button"
+                role="button"
+                tabIndex={0}
                 onClick={() => setDetailOrder(order)}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-xl border px-3 py-2 text-left text-sm transition-colors hover:bg-secondary/60"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") setDetailOrder(order);
+                }}
+                className="flex cursor-pointer flex-wrap items-center justify-between gap-2 rounded-xl border px-3 py-2 text-left text-sm transition-colors hover:bg-secondary/60"
               >
                 <span className="font-bold">#{order.orderNumber}</span>
                 <span className="flex-1 truncate">{order.customerName}</span>
+                {order.review ? (
+                  <span className="flex items-center gap-0.5 text-xs font-bold text-amber-500">
+                    {order.review.rating}★
+                  </span>
+                ) : null}
                 {order.cancelReason ? (
                   <span className="max-w-44 truncate text-xs text-muted-foreground">
                     {order.cancelReason}
@@ -523,7 +564,33 @@ export function ComandaBoard({
                   {formatPrice(order.totalCents, currency)}
                 </span>
                 <StatusBadge status={order.status} />
-              </button>
+                {tab === "pending" ? (
+                  <span className="flex gap-1.5">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 rounded-full text-xs"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        transition(order, "archived");
+                      }}
+                    >
+                      {t("archiveButton")}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 rounded-full text-xs text-destructive"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setCancelTarget(order);
+                      }}
+                    >
+                      {t("cancelButton")}
+                    </Button>
+                  </span>
+                ) : null}
+              </div>
             ))}
         </div>
       </div>
@@ -654,6 +721,43 @@ export function ComandaBoard({
                       {t("detailReason")}
                     </p>
                     <p>{detailOrder.cancelReason}</p>
+                  </div>
+                ) : null}
+
+                {detailOrder.review ? (
+                  <div className="grid gap-1.5 rounded-2xl bg-amber-500/10 p-4">
+                    <p className="text-xs font-medium uppercase tracking-wider text-amber-700 dark:text-amber-300">
+                      {t("reviewTitle")}
+                    </p>
+                    <p className="flex items-center gap-0.5">
+                      {[1, 2, 3, 4, 5].map((value) => (
+                        <Star
+                          key={value}
+                          className={`size-4 ${
+                            value <= (detailOrder.review?.rating ?? 0)
+                              ? "fill-amber-400 text-amber-400"
+                              : "text-muted-foreground/30"
+                          }`}
+                        />
+                      ))}
+                      <span className="ml-2 text-xs text-muted-foreground">
+                        {detailOrder.customerName}
+                      </span>
+                    </p>
+                    {detailOrder.review.comment ? (
+                      <p className="font-light">
+                        “{detailOrder.review.comment}”
+                      </p>
+                    ) : null}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="mt-1 w-fit rounded-full text-destructive"
+                      onClick={() => deleteReview(detailOrder)}
+                    >
+                      <Trash2 className="size-3.5" />
+                      {t("deleteReview")}
+                    </Button>
                   </div>
                 ) : null}
 

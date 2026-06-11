@@ -6,7 +6,14 @@ import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { db } from "@/lib/db";
-import { categories, products, stores, users } from "@/lib/db/schema";
+import {
+  categories,
+  products,
+  reviews,
+  stores,
+  users,
+} from "@/lib/db/schema";
+import { ReviewsDialog } from "@/components/store/reviews-dialog";
 import { ShareButton } from "@/components/store/share-button";
 import { Storefront } from "@/components/store/storefront";
 
@@ -49,7 +56,7 @@ export default async function PublicStorePage({
   const store = row.store;
   const isPro = row.ownerPlan === "pro";
 
-  const [catalog, categoryList] = await Promise.all([
+  const [catalog, categoryList, reviewList] = await Promise.all([
     db
       .select()
       .from(products)
@@ -60,6 +67,12 @@ export default async function PublicStorePage({
       .from(categories)
       .where(eq(categories.storeId, store.id))
       .orderBy(asc(categories.position), asc(categories.name)),
+    db
+      .select()
+      .from(reviews)
+      .where(eq(reviews.storeId, store.id))
+      .orderBy(desc(reviews.createdAt))
+      .limit(50),
   ]);
 
   const banner =
@@ -112,19 +125,16 @@ export default async function PublicStorePage({
             <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
               {store.name}
             </h1>
-            <p className="flex items-center gap-1.5 text-sm">
-              <Star className="size-4 fill-amber-400 text-amber-400" />
-              {rating ? (
-                <>
-                  <span className="font-bold">{rating}</span>
-                  <span className="text-muted-foreground">
-                    {t("reviewsCount", { count: store.ratingCount })}
-                  </span>
-                </>
-              ) : (
-                <span className="text-muted-foreground">{t("noReviews")}</span>
-              )}
-            </p>
+            <ReviewsDialog
+              rating={rating}
+              count={store.ratingCount}
+              reviews={reviewList.map((review) => ({
+                rating: review.rating,
+                comment: review.comment,
+                customerName: review.customerName,
+                createdAt: review.createdAt.toISOString(),
+              }))}
+            />
             {store.schedule ? (
               <p className="flex items-start gap-1.5 text-sm text-muted-foreground">
                 <Clock className="mt-0.5 size-4 shrink-0" />

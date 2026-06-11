@@ -388,7 +388,12 @@
     "phaseKitchenLabel": "Tiempo en cocina",
     "phaseDeliveryLabel": "Tiempo en reparto",
     "detailCustomer": "Cliente",
-    "detailReason": "Motivo de cancelación"
+    "detailReason": "Motivo de cancelación",
+    "archiveButton": "Archivar",
+    "archivedToast": "Pedido archivado",
+    "reviewTitle": "Reseña del cliente",
+    "deleteReview": "Eliminar reseña",
+    "reviewDeleted": "Reseña eliminada"
   },
   "store": {
     "noProducts": "Esta tienda todavía no tiene productos.",
@@ -429,6 +434,7 @@
     "share": "Compartir",
     "linkCopied": "Enlace copiado",
     "reviewsCount": "({count} reseñas)",
+    "reviewsTitle": "Reseñas",
     "noReviews": "Sin reseñas todavía",
     "scheduleLabel": "Horario",
     "recommendedTab": "Recomendados",

@@ -43,6 +43,13 @@
       "when": 1781170847871,
       "tag": "0005_next_rick_jones",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1781177070629,
+      "tag": "0006_organic_mauler",
+      "breakpoints": true
     }
   ]
 }

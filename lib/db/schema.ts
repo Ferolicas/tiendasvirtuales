@@ -18,6 +18,9 @@ export const orderStatusEnum = pgEnum("order_status", [
   "preparing",
   "ready",
   "delivered",
+  // archived: pendiente de pago que el dueño descarta del contador sin
+  // considerarlo una cancelación; no aparece en ninguna pestaña.
+  "archived",
   "shipped",
   "cancelled",
 ]);

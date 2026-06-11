@@ -5,17 +5,20 @@ import { db } from "@/lib/db";
 import { orderItems, orders, products, stores } from "@/lib/db/schema";
 import { rateLimit, clientIdentifier } from "@/lib/rate-limit";
 import { emitToOrder, emitToStore } from "@/lib/realtime";
+import { sendOrderReadyEmail, type OrderEmailData } from "@/lib/email";
+import { formatPrice } from "@/lib/format";
 
 // Ciclo v2 de la comanda: pending (sin pagar) → paid (entrante) →
 // preparing (aceptado) → ready (en reparto / listo) → delivered.
 // Los pedidos «pagar en tienda» pueden aceptarse aún pendientes de cobro.
 // Cancelar: en todas las fases menos en reparto (regla del fundador).
 const TRANSITIONS: Record<string, string[]> = {
-  pending: ["paid", "preparing", "cancelled"],
+  pending: ["paid", "preparing", "cancelled", "archived"],
   paid: ["preparing", "cancelled"],
   preparing: ["ready", "cancelled"],
   ready: ["delivered"],
   delivered: [],
+  archived: [],
   shipped: [],
   cancelled: [],
 };
@@ -62,7 +65,14 @@ export async function GET(
 
 const patchSchema = z
   .object({
-    status: z.enum(["paid", "preparing", "ready", "delivered", "cancelled"]),
+    status: z.enum([
+      "paid",
+      "preparing",
+      "ready",
+      "delivered",
+      "cancelled",
+      "archived",
+    ]),
     reason: z.string().min(3).max(300).optional(),
   })
   .refine((o) => o.status !== "cancelled" || Boolean(o.reason), {
@@ -159,6 +169,34 @@ export async function PATCH(
   };
   emitToStore(updated.storeId, "order:update", event);
   emitToOrder(updated.id, "order:update", event);
+
+  // Email al cliente cuando su pedido sale de cocina (en reparto / listo).
+  if (target === "ready") {
+    void (async () => {
+      const [store] = await db
+        .select({
+          name: stores.name,
+          logoUrl: stores.logoUrl,
+          currency: stores.currency,
+        })
+        .from(stores)
+        .where(eq(stores.id, updated.storeId))
+        .limit(1);
+      if (!store) return;
+      const data: OrderEmailData = {
+        storeName: store.name,
+        storeLogoUrl: store.logoUrl,
+        reference: `#${updated.orderNumber}`,
+        trackUrl: `/o/${updated.id}`,
+        fulfillment: updated.fulfillment,
+        customerName: updated.customerName,
+        lines: [],
+        shippingFormatted: null,
+        totalFormatted: formatPrice(updated.totalCents, store.currency),
+      };
+      await sendOrderReadyEmail(updated.customerEmail, data);
+    })().catch((err) => console.error("[orders] email reparto falló:", err));
+  }
 
   return Response.json({ order: updated });
 }

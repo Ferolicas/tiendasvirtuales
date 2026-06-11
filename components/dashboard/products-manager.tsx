@@ -94,6 +94,8 @@ export function ProductsManager({
   const [compareAt, setCompareAt] = useState("");
   const [categoryId, setCategoryId] = useState<string>("");
   const [newCategory, setNewCategory] = useState("");
+  const [recommended, setRecommended] = useState(false);
+  const [hidden, setHidden] = useState(false);
 
   const visible = useMemo(
     () =>
@@ -118,7 +120,11 @@ export function ProductsManager({
       setPrice("");
       setCompareAt("");
       setCategoryId("");
+      setRecommended(false);
+      setHidden(false);
     } else {
+      setRecommended(product.recommended);
+      setHidden(!product.active);
       setFormStore(product.storeId);
       setStockMode(
         product.unlimitedStock
@@ -179,8 +185,8 @@ export function ProductsManager({
         compareAt && percent ? Math.round(Number(compareAt) * 100) : null,
       stock: stockValue,
       unlimitedStock: stockMode === "unlimited",
-      recommended: form.get("recommended") === "on",
-      active: form.get("hidden") !== "on",
+      recommended,
+      active: !hidden,
       categoryId: finalCategory,
       ...(imageUrl ? { imageUrl } : {}),
     };
@@ -527,16 +533,13 @@ export function ProductsManager({
                 <label className="flex items-center justify-between rounded-2xl bg-secondary/60 px-4 py-3 text-sm font-medium">
                   {t("recommendedLabel")}
                   <Switch
-                    name="recommended"
-                    defaultChecked={current?.recommended ?? false}
+                    checked={recommended}
+                    onCheckedChange={setRecommended}
                   />
                 </label>
                 <label className="flex items-center justify-between rounded-2xl bg-secondary/60 px-4 py-3 text-sm font-medium">
                   {t("hiddenLabel")}
-                  <Switch
-                    name="hidden"
-                    defaultChecked={current ? !current.active : false}
-                  />
+                  <Switch checked={hidden} onCheckedChange={setHidden} />
                 </label>
               </div>
 

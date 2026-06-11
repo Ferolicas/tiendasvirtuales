@@ -83,11 +83,13 @@ export function StoresManager({
   const [connecting, setConnecting] = useState<string | null>(null);
   const [preset, setPreset] = useState<string | null>(null);
   const [customBanner, setCustomBanner] = useState(false);
+  const [pickup, setPickup] = useState(false);
 
   function openModal(store: ManagedStore | "new") {
     setEditing(store);
     setPreset(store === "new" ? null : store.bannerPreset);
     setCustomBanner(store !== "new" && Boolean(store.bannerUrl));
+    setPickup(store === "new" ? false : store.pickupEnabled);
   }
 
   async function uploadFile(
@@ -121,7 +123,7 @@ export function StoresManager({
       schedule: String(form.get("schedule") ?? "") || undefined,
       phone: String(form.get("phone") ?? "") || undefined,
       address: String(form.get("address") ?? "") || undefined,
-      pickupEnabled: form.get("pickup") === "on",
+      pickupEnabled: pickup,
       legalName: String(form.get("legalName") ?? "") || undefined,
       legalTaxId: String(form.get("legalTaxId") ?? "") || undefined,
       ...(preset && !customBanner ? { bannerPreset: preset } : {}),
@@ -443,10 +445,7 @@ export function StoresManager({
                     {t("pickupHint")}
                   </span>
                 </span>
-                <Switch
-                  name="pickup"
-                  defaultChecked={current?.pickupEnabled ?? false}
-                />
+                <Switch checked={pickup} onCheckedChange={setPickup} />
               </label>
 
               <Button

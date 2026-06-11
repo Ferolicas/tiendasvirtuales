@@ -3,7 +3,13 @@ import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { orderItems, orders, products, stores } from "@/lib/db/schema";
+import {
+  orderItems,
+  orders,
+  products,
+  reviews,
+  stores,
+} from "@/lib/db/schema";
 import {
   ComandaBoard,
   type ComandaOrder,
@@ -91,6 +97,25 @@ export default async function OrdersDashboardPage() {
     .orderBy(desc(orders.createdAt))
     .limit(120);
 
+  const reviewRows = recent.length
+    ? await db
+        .select({
+          orderId: reviews.orderId,
+          rating: reviews.rating,
+          comment: reviews.comment,
+        })
+        .from(reviews)
+        .where(
+          inArray(
+            reviews.orderId,
+            recent.map((o) => o.id)
+          )
+        )
+    : [];
+  const reviewByOrder = new Map(
+    reviewRows.map((r) => [r.orderId, { rating: r.rating, comment: r.comment }])
+  );
+
   const lineRows = recent.length
     ? await db
         .select({
@@ -135,6 +160,7 @@ export default async function OrdersDashboardPage() {
     readyAt: order.readyAt?.toISOString() ?? null,
     deliveredAt: order.deliveredAt?.toISOString() ?? null,
     lines: linesByOrder.get(order.id) ?? [],
+    review: reviewByOrder.get(order.id) ?? null,
   }));
 
   return (

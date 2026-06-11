@@ -176,7 +176,10 @@ export async function POST(req: Request) {
   // respuesta al comprador ni la tumban si Resend falla.
   const emailData: OrderEmailData = {
     storeName: store.name,
-    reference: order.id.slice(0, 8).toUpperCase(),
+    storeLogoUrl: store.logoUrl,
+    reference: `#${order.orderNumber}`,
+    trackUrl: `/o/${order.id}`,
+    fulfillment: order.fulfillment,
     customerName: order.customerName,
     lines: items.map((i) => {
       const product = productById.get(i.productId);

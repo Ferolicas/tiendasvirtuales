@@ -388,7 +388,12 @@
     "phaseKitchenLabel": "Time in kitchen",
     "phaseDeliveryLabel": "Time in delivery",
     "detailCustomer": "Customer",
-    "detailReason": "Cancellation reason"
+    "detailReason": "Cancellation reason",
+    "archiveButton": "Archive",
+    "archivedToast": "Order archived",
+    "reviewTitle": "Customer review",
+    "deleteReview": "Delete review",
+    "reviewDeleted": "Review deleted"
   },
   "store": {
     "noProducts": "This store doesn't have products yet.",
@@ -429,6 +434,7 @@
     "share": "Share",
     "linkCopied": "Link copied",
     "reviewsCount": "({count} reviews)",
+    "reviewsTitle": "Reviews",
     "noReviews": "No reviews yet",
     "scheduleLabel": "Hours",
     "recommendedTab": "Recommended",
