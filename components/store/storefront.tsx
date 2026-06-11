@@ -261,7 +261,7 @@ function ProductCard({
             </p>
           ) : null}
         </button>
-        <div className="mt-auto flex items-center justify-between gap-2">
+        <div className="mt-auto grid gap-2">
           <p className="font-extrabold tracking-tight">
             {formatPrice(product.priceCents, currency)}
           </p>
@@ -272,7 +272,7 @@ function ProductCard({
               cart.add(product.id);
               toast.success(t("addedToCart"));
             }}
-            className="rounded-full"
+            className="w-full rounded-full"
           >
             <Plus className="size-3.5" />
             {t("addToCart")}
