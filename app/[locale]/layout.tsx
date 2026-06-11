@@ -45,6 +45,10 @@ export async function generateMetadata({
       siteName: "Vendi",
       locale,
     },
+    other: {
+      // Verificación del programa de afiliados (Impact / Namecheap).
+      "impact-site-verification": "3a220a16-92bc-4dad-8d4e-691723faa3e0",
+    },
   };
 }
 

@@ -47,7 +47,10 @@ export async function POST(req: Request) {
   }
 
   const appUrl = process.env.APP_URL ?? "http://localhost:3000";
+  // Checkout EMBEBIDO: se renderiza dentro de un drawer de Vendi (nada de
+  // redirigir a una página de Stripe); al completar vuelve al panel.
   const base = {
+    ui_mode: "embedded_page" as const,
     mode: "subscription" as const,
     customer: customerId,
     line_items: [
@@ -63,8 +66,7 @@ export async function POST(req: Request) {
     ],
     metadata: { userId: user.id },
     subscription_data: { metadata: { userId: user.id } },
-    success_url: `${appUrl}/dashboard?billing=success`,
-    cancel_url: `${appUrl}/dashboard?billing=cancelled`,
+    return_url: `${appUrl}/dashboard?billing=success`,
   };
 
   // Stripe Tax requiere configuración previa en el dashboard de Stripe;
@@ -80,5 +82,5 @@ export async function POST(req: Request) {
     checkout = await stripe.checkout.sessions.create(base);
   }
 
-  return Response.json({ url: checkout.url });
+  return Response.json({ clientSecret: checkout.client_secret });
 }

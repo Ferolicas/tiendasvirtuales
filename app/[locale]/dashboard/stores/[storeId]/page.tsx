@@ -22,6 +22,7 @@ import {
   LegalForm,
   LogoForm,
   ShippingForm,
+  StoreInfoForm,
 } from "@/components/shared/store-settings";
 
 export default async function StoreAdminPage({
@@ -136,6 +137,22 @@ export default async function StoreAdminPage({
                   active: product.active,
                   imageUrl: product.imageUrl,
                 }))}
+              />
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-3xl shadow-soft">
+            <CardHeader>
+              <CardTitle className="tracking-tight">
+                {t("storeInfoTitle")}
+              </CardTitle>
+              <CardDescription>{t("storeInfoText")}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <StoreInfoForm
+                storeId={store.id}
+                initialName={store.name}
+                initialDescription={store.description}
               />
             </CardContent>
           </Card>

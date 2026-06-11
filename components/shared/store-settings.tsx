@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ExternalLink, Globe, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -425,8 +425,16 @@ export function ConnectButton({
   connected: boolean;
 }) {
   const t = useTranslations("dashboard");
+  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [unavailable, setUnavailable] = useState(false);
+
+  // Retorno brandeado desde el onboarding de Stripe.
+  const justReturned = searchParams.get("connect") === "done";
+  useEffect(() => {
+    if (justReturned && connected) toast.success(t("connectDoneToast"));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function onConnect() {
     setLoading(true);
@@ -446,8 +454,12 @@ export function ConnectButton({
 
   if (connected) {
     return (
-      <p className="flex items-center gap-2 text-sm font-medium text-green-600">
-        <span className="inline-block size-2 rounded-full bg-green-500" />
+      <p
+        className={`flex items-center gap-2 text-sm font-medium text-green-600 dark:text-green-400 ${
+          justReturned ? "animate-fade-up" : ""
+        }`}
+      >
+        <VendiLiveDot />
         {t("connectActive")}
       </p>
     );
@@ -466,8 +478,84 @@ export function ConnectButton({
         size="sm"
         className="w-fit rounded-full"
       >
+        {loading ? <Loader2 className="size-3.5 animate-spin" /> : null}
         {loading ? t("connectLoading") : t("connectButton")}
       </Button>
+      {loading ? (
+        <p className="animate-fade-in text-xs font-light text-muted-foreground">
+          {t("connectRedirect")}
+        </p>
+      ) : null}
     </div>
+  );
+}
+
+export function StoreInfoForm({
+  storeId,
+  initialName,
+  initialDescription,
+}: {
+  storeId: string;
+  initialName: string;
+  initialDescription: string | null;
+}) {
+  const t = useTranslations("dashboard");
+  const tToast = useTranslations("toasts");
+  const router = useRouter();
+  const [saving, setSaving] = useState(false);
+
+  async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSaving(true);
+    const form = new FormData(event.currentTarget);
+    const res = await fetch(`/api/stores/${storeId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: form.get("name"),
+        description: String(form.get("description") ?? ""),
+      }),
+    });
+    setSaving(false);
+    if (res.ok) {
+      toast.success(tToast("settingsSaved"));
+      router.refresh();
+    } else {
+      toast.error(tToast("settingsFailed"));
+    }
+  }
+
+  return (
+    <form method="post" onSubmit={onSubmit} className="grid gap-3">
+      <div className="grid gap-2">
+        <Label htmlFor="info-name">{t("storeName")}</Label>
+        <Input
+          id="info-name"
+          name="name"
+          minLength={2}
+          maxLength={80}
+          defaultValue={initialName}
+          required
+        />
+      </div>
+      <div className="grid gap-2">
+        <Label htmlFor="info-description">{t("storeDescription")}</Label>
+        <Input
+          id="info-description"
+          name="description"
+          maxLength={500}
+          defaultValue={initialDescription ?? ""}
+        />
+      </div>
+      <Button
+        type="submit"
+        size="sm"
+        disabled={saving}
+        className="w-fit rounded-full"
+      >
+        {saving ? <Loader2 className="size-3.5 animate-spin" /> : null}
+        {t("saveButton")}
+      </Button>
+    </form>
   );
 }

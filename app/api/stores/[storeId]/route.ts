@@ -7,6 +7,7 @@ import { rateLimit, clientIdentifier } from "@/lib/rate-limit";
 import { imageUrlSchema } from "@/lib/validations/product";
 
 const updateStoreSchema = z.object({
+  name: z.string().min(2).max(80).optional(),
   description: z.string().max(500).optional(),
   shippingCents: z.number().int().min(0).max(100_000).optional(),
   logoUrl: imageUrlSchema.nullable().optional(),
