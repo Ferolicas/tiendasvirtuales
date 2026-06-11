@@ -14,7 +14,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { LiveOrders } from "@/components/shared/live-orders";
+import { OrdersPanel } from "@/components/shared/orders-panel";
 import { ProductsPanel } from "@/components/shared/products-panel";
 import {
   ConnectButton,
@@ -98,12 +98,14 @@ export default async function StoreAdminPage({
             <CardDescription>{t("liveOrdersSubtitle")}</CardDescription>
           </CardHeader>
           <CardContent>
-            <LiveOrders
+            <OrdersPanel
               storeId={store.id}
               currency={store.currency}
+              initialHasMore={recentOrders.length === 20}
               initialOrders={recentOrders.map((order) => ({
                 id: order.id,
                 customerName: order.customerName,
+                customerEmail: order.customerEmail,
                 totalCents: order.totalCents,
                 status: order.status,
                 createdAt: order.createdAt.toISOString(),
@@ -126,7 +128,10 @@ export default async function StoreAdminPage({
                 initialProducts={productList.map((product) => ({
                   id: product.id,
                   name: product.name,
+                  description: product.description,
                   priceCents: product.priceCents,
+                  stock: product.stock,
+                  active: product.active,
                 }))}
               />
             </CardContent>

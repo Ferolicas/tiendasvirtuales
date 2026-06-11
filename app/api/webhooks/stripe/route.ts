@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { orders, users } from "@/lib/db/schema";
 import { getStripe, stripeConfigured } from "@/lib/stripe";
+import { emitToStore } from "@/lib/realtime";
 
 // Webhook de Stripe verificado por firma. Gestiona:
 // - Suscripción Vendi Pro (checkout completado, cambios y bajas)
@@ -55,7 +56,7 @@ export async function POST(req: Request) {
       // Pago de un pedido de tienda (cuenta Connect)
       const orderId = checkout.metadata?.orderId;
       if (orderId) {
-        await db
+        const [updated] = await db
           .update(orders)
           .set({
             status: "paid",
@@ -64,7 +65,15 @@ export async function POST(req: Request) {
                 ? checkout.payment_intent
                 : (checkout.payment_intent?.id ?? null),
           })
-          .where(eq(orders.id, orderId));
+          .where(eq(orders.id, orderId))
+          .returning();
+        // El panel del dueño ve el pago al instante, sin refrescar.
+        if (updated) {
+          emitToStore(updated.storeId, "order:update", {
+            id: updated.id,
+            status: updated.status,
+          });
+        }
         break;
       }
 
