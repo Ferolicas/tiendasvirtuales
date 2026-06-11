@@ -39,7 +39,7 @@ import { Turnstile } from "@/components/shared/turnstile";
 import { VendiDot, VendiLiveDot } from "@/components/shared/vendi-dot";
 import { TrackOrder } from "@/components/store/track-order";
 import { formatPrice } from "@/lib/format";
-import { ChevronUp } from "lucide-react";
+import { ChevronUp, X as XIcon } from "lucide-react";
 import { io as ioClient, type Socket as SocketType } from "socket.io-client";
 
 export interface StorefrontStore {
@@ -732,6 +732,18 @@ function ActiveOrderBar({
         }}
       >
         <DrawerContent className="max-h-[92dvh]">
+          {/* X: vuelve a la barrita minimizada (background) */}
+          <button
+            type="button"
+            aria-label="✕"
+            onClick={() => {
+              setExpanded(false);
+              if (finished) onClear();
+            }}
+            className="absolute right-4 top-4 z-10 flex size-9 items-center justify-center rounded-full bg-secondary text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <XIcon className="size-4" />
+          </button>
           <div className="mx-auto w-full min-h-0 max-w-md flex-1 overflow-y-auto px-4 pb-10 pt-6">
             <TrackOrder
               order={{
@@ -745,6 +757,10 @@ function ActiveOrderBar({
               storeName={data.storeName}
               storePhone={data.storePhone}
               vertical={data.vertical}
+              onExit={() => {
+                setExpanded(false);
+                if (finished) onClear();
+              }}
             />
           </div>
         </DrawerContent>

@@ -333,6 +333,7 @@
     "commentPlaceholder": "Cuéntanos cómo fue (opcional)",
     "rateButton": "Enviar valoración",
     "rateThanks": "¡Gracias por tu valoración, {name}!",
+    "backToStore": "Volver a la tienda",
     "liveLabel": "Seguimiento en vivo"
   },
   "toasts": {

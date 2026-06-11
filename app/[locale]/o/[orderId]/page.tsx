@@ -64,6 +64,7 @@ export default async function OrderTrackingPage({
           storeName={row.store.name}
           storePhone={row.store.phone}
           vertical={verticalFor(row.store.storeCategory)}
+          exitHref={`/s/${row.store.slug}`}
         />
       </section>
     </main>

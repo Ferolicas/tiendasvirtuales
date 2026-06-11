@@ -148,11 +148,16 @@ export function TrackOrder({
   storeName,
   storePhone,
   vertical = "general",
+  onExit,
+  exitHref,
 }: {
   order: TrackedOrder;
   storeName: string;
   storePhone: string | null;
   vertical?: TrackVertical;
+  // Salida: en drawer cierra (onExit); en página vuelve a la tienda (href).
+  onExit?: () => void;
+  exitHref?: string;
 }) {
   const t = useTranslations("tracking");
   const [status, setStatus] = useState(order.status);
@@ -321,9 +326,20 @@ export function TrackOrder({
         </form>
       ) : null}
       {normalized === "delivered" && reviewed ? (
-        <p className="animate-fade-in text-center text-sm font-medium text-green-600 dark:text-green-400">
-          {t("rateThanks", { name: order.customerName })}
-        </p>
+        <div className="animate-fade-in grid justify-items-center gap-4">
+          <p className="text-center text-sm font-medium text-green-600 dark:text-green-400">
+            {t("rateThanks", { name: order.customerName })}
+          </p>
+          {onExit ? (
+            <Button onClick={onExit} className="rounded-full">
+              {t("backToStore")}
+            </Button>
+          ) : exitHref ? (
+            <Button asChild className="rounded-full">
+              <a href={exitHref}>{t("backToStore")}</a>
+            </Button>
+          ) : null}
+        </div>
       ) : null}
     </div>
   );

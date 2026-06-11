@@ -172,9 +172,15 @@ export default async function OrdersDashboardPage() {
     vertical: verticalById.get(order.storeId) ?? "general",
   }));
 
+  // Iconos de cocina SOLO si todas las tiendas del dueño son de comida.
+  const foodMode =
+    ownStores.length > 0 &&
+    ownStores.every((s) => verticalFor(s.storeCategory) === "food");
+
   return (
     <ComandaBoard
       storeIds={storeIds}
+      foodMode={foodMode}
       initialOrders={initialOrders}
       kpis={{
         salesCents: Number(kpis.salesCents),

@@ -333,6 +333,7 @@
     "commentPlaceholder": "Tell us how it went (optional)",
     "rateButton": "Send rating",
     "rateThanks": "Thanks for your rating, {name}!",
+    "backToStore": "Back to the store",
     "liveLabel": "Live tracking"
   },
   "toasts": {

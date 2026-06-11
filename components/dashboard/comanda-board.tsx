@@ -11,6 +11,7 @@ import {
   CreditCard,
   Inbox,
   MapPin,
+  Package,
   Phone,
   Star,
   Store as StoreIcon,
@@ -123,17 +124,20 @@ const INCOMING = (o: ComandaOrder) =>
 
 export function ComandaBoard({
   storeIds,
+  foodMode = false,
   initialOrders,
   kpis,
   top,
   currency,
 }: {
   storeIds: string[];
+  foodMode?: boolean;
   initialOrders: ComandaOrder[];
   kpis: Kpis;
   top: { day: TopEntry[]; month: TopEntry[]; year: TopEntry[] };
   currency: string;
 }) {
+  const PrepIcon = foodMode ? ChefHat : Package;
   const t = useTranslations("comanda");
   const tDash = useTranslations("dashboard");
   const [orders, setOrders] = useState<ComandaOrder[]>(initialOrders);
@@ -470,7 +474,7 @@ export function ComandaBoard({
           extraTimes={() => []}
           primaryAction={(o) => ({
             label: t("acceptButton"),
-            icon: ChefHat,
+            icon: PrepIcon,
             run: () => transition(o, "preparing"),
           })}
           onCancel={(o) => setCancelTarget(o)}
@@ -478,7 +482,7 @@ export function ComandaBoard({
         />
         <ComandaColumn
           title={t("colPreparing")}
-          icon={ChefHat}
+          icon={PrepIcon}
           orders={preparing}
           now={now}
           currency={currency}
