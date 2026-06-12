@@ -53,6 +53,7 @@ export default async function StoresPage() {
           bannerPreset: store.bannerPreset,
           schedule: store.schedule,
           hours: store.hours,
+          timeFormat: store.timeFormat,
           phone: store.phone,
           address: store.address,
           city: store.city,

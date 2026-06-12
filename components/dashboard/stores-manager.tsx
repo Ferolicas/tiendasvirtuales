@@ -122,6 +122,7 @@ export interface ManagedStore {
   bannerPreset: string | null;
   schedule: string | null;
   hours: StoreHoursRow[] | null;
+  timeFormat: string;
   phone: string | null;
   address: string | null;
   city: string | null;
@@ -183,6 +184,8 @@ export function StoresManager({
   const [geo, setGeo] = useState<{ lat: number; lng: number } | null>(null);
   const [locating, setLocating] = useState(false);
   const [hoursRows, setHoursRows] = useState<StoreHoursRow[]>([]);
+  const [alwaysOpen, setAlwaysOpen] = useState(false);
+  const [timeFormat, setTimeFormat] = useState<"24h" | "12h">("24h");
   const [country, setCountry] = useState("");
   const locale = useLocale();
   const countryOptions = useMemo(() => {
@@ -216,7 +219,18 @@ export function StoresManager({
         ? { lat: store.latitude, lng: store.longitude }
         : null
     );
-    setHoursRows(store === "new" ? [] : (store.hours ?? []));
+    // Una sola fila de todos los días con apertura = cierre significa
+    // «abierto 24/7»: se muestra como interruptor, no como fila editable.
+    const rows = store === "new" ? [] : (store.hours ?? []);
+    const always =
+      rows.length === 1 &&
+      rows[0].days === "all" &&
+      rows[0].open === rows[0].close;
+    setAlwaysOpen(always);
+    setHoursRows(always ? [] : rows);
+    setTimeFormat(
+      store !== "new" && store.timeFormat === "12h" ? "12h" : "24h"
+    );
     setCountry(store === "new" ? "" : (store.country ?? ""));
   }
 
@@ -265,9 +279,11 @@ export function StoresManager({
     const form = new FormData(event.currentTarget);
     const isNew = editing === "new";
 
-    const cleanHours = hoursRows.filter(
-      (r) => /^\d{2}:\d{2}$/.test(r.open) && /^\d{2}:\d{2}$/.test(r.close)
-    );
+    const cleanHours = alwaysOpen
+      ? [{ days: "all", open: "00:00", close: "00:00" }]
+      : hoursRows.filter(
+          (r) => /^\d{2}:\d{2}$/.test(r.open) && /^\d{2}:\d{2}$/.test(r.close)
+        );
 
     // Sin banner elegido: se sugiere el predefinido de la categoría.
     const effectivePreset =
@@ -280,7 +296,8 @@ export function StoresManager({
       storeCategory: category,
       description: String(form.get("description") ?? "") || undefined,
       hours: cleanHours,
-      schedule: formatHours(cleanHours) || undefined,
+      schedule: formatHours(cleanHours, timeFormat) || undefined,
+      timeFormat,
       phone: String(form.get("phone") ?? "") || undefined,
       address: String(form.get("address") ?? "") || undefined,
       city: String(form.get("city") ?? "") || undefined,
@@ -617,6 +634,12 @@ export function StoresManager({
 
               <div className="grid gap-2">
                 <Label>{t("scheduleLabel2")}</Label>
+                <label className="flex items-center justify-between rounded-2xl bg-secondary/60 px-4 py-2.5 text-sm font-medium">
+                  {t("alwaysOpenLabel")}
+                  <Switch checked={alwaysOpen} onCheckedChange={setAlwaysOpen} />
+                </label>
+                {alwaysOpen ? null : (
+                <>
                 {hoursRows.map((row, i) => (
                   <div
                     key={i}
@@ -678,11 +701,36 @@ export function StoresManager({
                   <Plus className="size-3.5" />
                   {t("hoursAdd")}
                 </Button>
+                {hoursRows.length > 0 ? (
+                  <div className="flex items-center gap-2 pt-1">
+                    <span className="text-xs font-medium text-muted-foreground">
+                      {t("timeFormatLabel")}
+                    </span>
+                    {(["24h", "12h"] as const).map((value) => (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() => setTimeFormat(value)}
+                        className={`rounded-full border px-3 py-1 text-xs font-bold transition-colors ${
+                          timeFormat === value
+                            ? "border-primary bg-primary text-primary-foreground"
+                            : "text-muted-foreground"
+                        }`}
+                      >
+                        {value === "24h"
+                          ? t("timeFormat24")
+                          : t("timeFormat12")}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
                 {hoursRows.length === 0 && current?.schedule ? (
                   <p className="text-xs font-light text-muted-foreground">
                     {t("hoursLegacy", { schedule: current.schedule })}
                   </p>
                 ) : null}
+                </>
+                )}
               </div>
 
               <label className="flex items-center justify-between rounded-2xl bg-secondary/60 px-4 py-3 text-sm">

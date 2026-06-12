@@ -53,9 +53,24 @@ export function isOpenFromHours(
   return any ? false : null;
 }
 
+export type TimeFormat = "24h" | "12h";
+
+// "14:30" → "2:30 PM" cuando la tienda prefiere formato AM/PM (LatAm).
+function formatTime(time: string, format: TimeFormat): string {
+  if (format === "24h") return time;
+  const [h, m] = time.split(":").map(Number);
+  const suffix = h < 12 ? "AM" : "PM";
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return `${h12}:${String(m).padStart(2, "0")} ${suffix}`;
+}
+
 // Texto compacto en español para cabeceras y tarjetas: "L-V 9:00–20:00 ·
-// Sáb 10:00–14:00". Se guarda también en stores.schedule.
-export function formatHours(hours: StoreHoursRow[]): string {
+// Sáb 10:00–14:00". Se guarda también en stores.schedule. Una fila con
+// apertura igual al cierre significa abierto las 24 horas ese día.
+export function formatHours(
+  hours: StoreHoursRow[],
+  format: TimeFormat = "24h"
+): string {
   const label = (spec: string) => {
     if (spec === "all") return "Todos los días";
     if (spec === "weekdays") return "L-V";
@@ -64,7 +79,12 @@ export function formatHours(hours: StoreHoursRow[]): string {
   };
   return hours
     .filter((r) => toMinutes(r.open) !== null && toMinutes(r.close) !== null)
-    .map((r) => `${label(r.days)} ${r.open}–${r.close}`)
+    .map((r) => {
+      if (toMinutes(r.open) === toMinutes(r.close)) {
+        return r.days === "all" ? "Abierto 24/7" : `${label(r.days)} 24 h`;
+      }
+      return `${label(r.days)} ${formatTime(r.open, format)}–${formatTime(r.close, format)}`;
+    })
     .join(" · ");
 }
 

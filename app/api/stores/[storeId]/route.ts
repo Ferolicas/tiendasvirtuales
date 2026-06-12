@@ -31,6 +31,7 @@ const updateStoreSchema = z.object({
   bannerPreset: z.enum(BANNER_PRESETS).nullable().optional(),
   schedule: z.string().max(500).nullable().optional(),
   hours: storeHoursSchema.nullable().optional(),
+  timeFormat: z.enum(["24h", "12h"]).optional(),
   phone: z.string().max(30).nullable().optional(),
   address: z.string().max(300).nullable().optional(),
   city: z.string().max(80).nullable().optional(),

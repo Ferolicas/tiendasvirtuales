@@ -1,0 +1,1 @@
+ALTER TABLE "stores" ADD COLUMN "time_format" text DEFAULT '24h' NOT NULL;

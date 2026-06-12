@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { and, asc, desc, eq, isNull } from "drizzle-orm";
-import { Clock, MapPin, Phone, Star } from "lucide-react";
+import { Clock, Globe, MapPin, Phone, Star } from "lucide-react";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
@@ -39,10 +39,10 @@ export default async function PublicStorePage({
   params,
   searchParams,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ locale: string; slug: string }>;
   searchParams: Promise<{ paid?: string }>;
 }) {
-  const { slug } = await params;
+  const { locale, slug } = await params;
   const { paid } = await searchParams;
   const t = await getTranslations("store");
 
@@ -160,6 +160,21 @@ export default async function PublicStorePage({
                 <span className="flex items-center gap-1.5">
                   <MapPin className="size-4" />
                   {store.address}
+                </span>
+              ) : null}
+              {store.city || store.country ? (
+                <span className="flex items-center gap-1.5">
+                  <Globe className="size-4" />
+                  {[
+                    store.city,
+                    store.country
+                      ? new Intl.DisplayNames([locale], {
+                          type: "region",
+                        }).of(store.country)
+                      : null,
+                  ]
+                    .filter(Boolean)
+                    .join(", ")}
                 </span>
               ) : null}
             </div>

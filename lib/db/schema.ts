@@ -104,6 +104,9 @@ export const stores = pgTable("stores", {
   // Horario estructurado [{days, open, close}]; `schedule` guarda el texto
   // generado para mostrar (y como legado de tiendas antiguas).
   hours: jsonb("hours").$type<StoreHoursRow[] | null>(),
+  // Formato de hora preferido para mostrar el horario: "24h" o "12h"
+  // (AM/PM, habitual en Colombia y LatAm).
+  timeFormat: text("time_format").notNull().default("24h"),
   pickupEnabled: boolean("pickup_enabled").notNull().default(false),
   // Media de reseñas desnormalizada para la cabecera
   ratingSum: integer("rating_sum").notNull().default(0),

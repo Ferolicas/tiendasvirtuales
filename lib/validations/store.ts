@@ -32,6 +32,7 @@ export const createStoreSchema = z.object({
   bannerPreset: z.enum(BANNER_PRESETS).optional(),
   schedule: z.string().max(500).optional(),
   hours: storeHoursSchema.nullable().optional(),
+  timeFormat: z.enum(["24h", "12h"]).optional(),
   phone: z.string().max(30).optional(),
   address: z.string().max(300).optional(),
   city: z.string().max(80).optional(),
