@@ -6,6 +6,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { stores } from "@/lib/db/schema";
 import { rateLimit, clientIdentifier } from "@/lib/rate-limit";
+import { SUPPORTED_CURRENCIES, currencyForCountry } from "@/lib/currency";
 import { UPLOAD_DIR } from "@/lib/storage";
 import { imageUrlSchema } from "@/lib/validations/product";
 import { storeHoursSchema } from "@/lib/validations/store";
@@ -34,6 +35,7 @@ const updateStoreSchema = z.object({
   address: z.string().max(300).nullable().optional(),
   city: z.string().max(80).nullable().optional(),
   country: z.string().length(2).toUpperCase().nullable().optional(),
+  currency: z.enum(SUPPORTED_CURRENCIES).optional(),
   latitude: z.number().min(-90).max(90).nullable().optional(),
   longitude: z.number().min(-180).max(180).nullable().optional(),
   pickupEnabled: z.boolean().optional(),
@@ -76,9 +78,17 @@ export async function PATCH(
     return Response.json({ error: result.error.flatten() }, { status: 400 });
   }
 
+  // Si llega país sin moneda explícita, la moneda se ajusta al país
+  // (CO → COP, MX → MXN…). Así la tienda nunca queda en EUR por error.
+  const data = { ...result.data };
+  if (data.currency === undefined && data.country) {
+    const derived = currencyForCountry(data.country);
+    if (derived) data.currency = derived;
+  }
+
   const [updated] = await db
     .update(stores)
-    .set(result.data)
+    .set(data)
     .where(eq(stores.id, storeId))
     .returning();
 

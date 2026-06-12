@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { SUPPORTED_CURRENCIES } from "@/lib/currency";
 import { imageUrlSchema } from "@/lib/validations/product";
 import { STORE_CATEGORIES } from "@/lib/verticals";
 
@@ -25,7 +26,7 @@ export const createStoreSchema = z.object({
   name: z.string().min(2).max(80),
   storeCategory: z.enum(STORE_CATEGORIES),
   description: z.string().max(500).optional(),
-  currency: z.enum(["EUR", "USD", "COP", "MXN"]).default("EUR"),
+  currency: z.enum(SUPPORTED_CURRENCIES).optional(),
   logoUrl: imageUrlSchema.optional(),
   bannerUrl: imageUrlSchema.optional(),
   bannerPreset: z.enum(BANNER_PRESETS).optional(),

@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { products, stores } from "@/lib/db/schema";
 import { rateLimit, clientIdentifier } from "@/lib/rate-limit";
+import { emitToCatalog } from "@/lib/realtime";
 import { imageUrlSchema } from "@/lib/validations/product";
 
 const updateProductSchema = z.object({
@@ -77,6 +78,8 @@ export async function PATCH(
     .where(eq(products.id, productId))
     .returning();
 
+  emitToCatalog(storeId, "product:update", { product: updated });
+
   return Response.json({ product: updated });
 }
 
@@ -104,6 +107,8 @@ export async function DELETE(
     }
     throw err;
   }
+
+  emitToCatalog(storeId, "product:delete", { id: productId });
 
   return Response.json({ ok: true });
 }

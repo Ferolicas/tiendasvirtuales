@@ -6,6 +6,7 @@ import { createStoreSchema } from "@/lib/validations/store";
 import { rateLimit, clientIdentifier } from "@/lib/rate-limit";
 import { slugify } from "@/lib/slug";
 import { PLAN_LIMITS } from "@/lib/plan";
+import { currencyForCountry } from "@/lib/currency";
 
 export async function GET() {
   const session = await auth();
@@ -68,12 +69,20 @@ export async function POST(req: Request) {
     slug = `${base}-${Math.random().toString(36).slice(2, 6)}`;
   }
 
+  // La moneda se deriva del país elegido (CO → COP, MX → MXN…) salvo que
+  // venga explícita en la petición.
+  const currency =
+    result.data.currency ??
+    currencyForCountry(result.data.country) ??
+    "EUR";
+
   const [store] = await db
     .insert(stores)
     .values({
       ownerId: session.user.id,
       slug,
       ...result.data,
+      currency,
     })
     .returning();
 

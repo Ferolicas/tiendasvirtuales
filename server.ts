@@ -22,6 +22,11 @@ app.prepare().then(() => {
         socket.join(`store:${storeId}`);
       }
     });
+    socket.on("catalog:join", (storeId: unknown) => {
+      if (typeof storeId === "string" && storeId.length <= 64) {
+        socket.join(`catalog:${storeId}`);
+      }
+    });
     socket.on("order:join", (orderId: unknown) => {
       if (typeof orderId === "string" && orderId.length <= 64) {
         socket.join(`order:${orderId}`);

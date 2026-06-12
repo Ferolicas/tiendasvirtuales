@@ -5,6 +5,7 @@ import { products, stores, users } from "@/lib/db/schema";
 import { createProductSchema } from "@/lib/validations/product";
 import { rateLimit, clientIdentifier } from "@/lib/rate-limit";
 import { PLAN_LIMITS } from "@/lib/plan";
+import { emitToCatalog } from "@/lib/realtime";
 import { z } from "zod";
 
 const storeIdSchema = z.uuid();
@@ -79,6 +80,8 @@ export async function POST(
     .insert(products)
     .values({ ...result.data, storeId })
     .returning();
+
+  emitToCatalog(storeId, "product:new", { product });
 
   return Response.json({ product }, { status: 201 });
 }

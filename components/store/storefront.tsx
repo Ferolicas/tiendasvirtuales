@@ -133,7 +133,7 @@ function ProductImage({
 export function Storefront({
   store,
   categories,
-  products,
+  products: initialProducts,
 }: {
   store: StorefrontStore;
   categories: StorefrontCategory[];
@@ -152,6 +152,38 @@ export function Storefront({
 
   useEffect(() => {
     setActiveOrderId(localStorage.getItem(`vendi-active-order-${store.id}`));
+  }, [store.id]);
+
+  // Catálogo en vivo: el dueño crea, edita u oculta un producto y los
+  // visitantes lo ven al instante, sin recargar.
+  const [products, setProducts] = useState(initialProducts);
+  useEffect(() => setProducts(initialProducts), [initialProducts]);
+  useEffect(() => {
+    type LiveProduct = StorefrontProduct & { active: boolean };
+    const socket: SocketType = ioClient({
+      transports: ["websocket", "polling"],
+    });
+    socket.on("connect", () => socket.emit("catalog:join", store.id));
+    socket.on("product:new", ({ product }: { product: LiveProduct }) => {
+      if (!product.active) return;
+      setProducts((prev) =>
+        prev.some((p) => p.id === product.id) ? prev : [...prev, product]
+      );
+    });
+    socket.on("product:update", ({ product }: { product: LiveProduct }) => {
+      setProducts((prev) => {
+        if (!product.active) return prev.filter((p) => p.id !== product.id);
+        return prev.some((p) => p.id === product.id)
+          ? prev.map((p) => (p.id === product.id ? product : p))
+          : [...prev, product];
+      });
+    });
+    socket.on("product:delete", ({ id }: { id: string }) => {
+      setProducts((prev) => prev.filter((p) => p.id !== id));
+    });
+    return () => {
+      socket.disconnect();
+    };
   }, [store.id]);
   const [highlightTab, setHighlightTab] = useState<"recommended" | "best">(
     "recommended"
@@ -184,8 +216,15 @@ export function Storefront({
 
   const grouped = useMemo(() => {
     const byCategory = new Map<string | null, StorefrontProduct[]>();
+    // Una categoría desconocida (p. ej. creada al vuelo y recibida por
+    // socket antes de recargar) se agrupa como «sin categoría» para que el
+    // producto nunca quede invisible.
+    const known = new Set(categories.map((c) => c.id));
     for (const product of products) {
-      const key = product.categoryId;
+      const key =
+        product.categoryId && known.has(product.categoryId)
+          ? product.categoryId
+          : null;
       byCategory.set(key, [...(byCategory.get(key) ?? []), product]);
     }
     const sections: { id: string | null; name: string | null; items: StorefrontProduct[] }[] = [];

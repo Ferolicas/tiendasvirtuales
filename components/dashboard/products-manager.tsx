@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   EyeOff,
@@ -82,6 +82,10 @@ export function ProductsManager({
   const router = useRouter();
 
   const [products, setProducts] = useState(initialProducts);
+  // router.refresh() trae props nuevas del servidor; sin esto el estado
+  // local se quedaría con la lista vieja y el producto recién creado no
+  // aparecería hasta recargar la página.
+  useEffect(() => setProducts(initialProducts), [initialProducts]);
   const [filter, setFilter] = useState<string>("all");
   const [editing, setEditing] = useState<ManagedProduct | "new" | null>(null);
   const [deleting, setDeleting] = useState<ManagedProduct | null>(null);
@@ -208,6 +212,18 @@ export function ProductsManager({
         data?.error === "plan_limit" ? t("planLimit") : tToast("productFailed")
       );
       return;
+    }
+    // Reflejo inmediato en la lista con el producto que devuelve la API;
+    // router.refresh() lo confirma después con los datos del servidor.
+    const data = await res.json().catch(() => null);
+    if (data?.product) {
+      const storeName = stores.find((s) => s.id === storeId)?.name ?? "";
+      const saved = { ...data.product, storeName } as ManagedProduct;
+      setProducts((prev) =>
+        isNew
+          ? [saved, ...prev]
+          : prev.map((p) => (p.id === saved.id ? saved : p))
+      );
     }
     toast.success(isNew ? tToast("productAdded") : t("productUpdated"));
     setEditing(null);
