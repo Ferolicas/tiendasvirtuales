@@ -12,7 +12,6 @@ import { rateLimit, clientIdentifier } from "@/lib/rate-limit";
 import { emitToStore } from "@/lib/realtime";
 import { getStripe, stripeConfigured } from "@/lib/stripe";
 import { feeFor } from "@/lib/plan";
-import { verifyTurnstile } from "@/lib/turnstile";
 import { verticalFor } from "@/lib/verticals";
 import { sendPushToUser } from "@/lib/push";
 import {
@@ -35,14 +34,6 @@ export async function POST(req: Request) {
   }
 
   const body = await req.json().catch(() => null);
-  const human = await verifyTurnstile(
-    (body as { turnstileToken?: unknown } | null)?.turnstileToken,
-    clientIdentifier(req)
-  );
-  if (!human) {
-    return Response.json({ error: "turnstile" }, { status: 403 });
-  }
-
   const result = createOrderSchema.safeParse(body);
   if (!result.success) {
     return Response.json({ error: result.error.flatten() }, { status: 400 });

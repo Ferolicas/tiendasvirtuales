@@ -77,7 +77,7 @@ Feedback con toasts sonner tematizados (top-center, tokens de marca).
 
 `vendi-dot` (firma) · `reveal` (motion) · `status-badge` · `empty-state` ·
 `toaster` · `pro-celebration` · `theme-toggle` · `locale-switcher` ·
-`password-input` · `turnstile` · `legal-page` (shell legal) ·
+`password-input` · `legal-page` (shell legal) ·
 `orders-panel` (pedidos: buscar/filtrar/drawer/transiciones/realtime) ·
 `products-panel` (catálogo: optimistic, foto, drawer edición) ·
 `store/storefront` (escaparate: tarjetas, detalle, carrito, checkout,

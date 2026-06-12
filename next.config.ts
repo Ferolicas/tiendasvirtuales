@@ -17,7 +17,7 @@ const securityHeaders = [
   {
     key: "Content-Security-Policy",
     value:
-      "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://challenges.cloudflare.com https://js.stripe.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' ws: wss: https://api.stripe.com https://r.stripe.com https://challenges.cloudflare.com; frame-src https://js.stripe.com https://checkout.stripe.com https://challenges.cloudflare.com;",
+      "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://js.stripe.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' ws: wss: https://api.stripe.com https://r.stripe.com; frame-src https://js.stripe.com https://checkout.stripe.com;",
   },
   {
     key: "Strict-Transport-Security",

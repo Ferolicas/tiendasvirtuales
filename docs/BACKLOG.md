@@ -23,8 +23,9 @@
       ✅ 2026-06-10
 - [x] **P0.7 Límites de plan** en servidor (free: 1 tienda / 10 productos).
       ✅ 2026-06-10
-- [x] **P0.8 Cloudflare Turnstile** en registro y checkout (se activa al
-      poner las claves en .env). ✅ código 2026-06-10
+- [x] ~~**P0.8 Cloudflare Turnstile** en registro y checkout~~ — retirado el
+      2026-06-12 por bloquear registros reales; el anti-spam queda cubierto
+      por rate limiting por IP.
 - [x] **P0.9 Legal ES/EN**: 4 páginas + footer + legal autogenerado por
       tienda, con NIF y dirección fiscal reales. ✅ 2026-06-11
 - [x] **P0.10 Operación**: backup diario 04:00 con rotación 14 días y

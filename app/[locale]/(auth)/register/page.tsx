@@ -15,7 +15,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/shared/password-input";
-import { Turnstile } from "@/components/shared/turnstile";
 
 export default function RegisterPage() {
   const t = useTranslations("auth");
@@ -32,7 +31,6 @@ export default function RegisterPage() {
       name: form.get("name"),
       email: form.get("email"),
       password: form.get("password"),
-      turnstileToken: form.get("cf-turnstile-response") ?? undefined,
     };
 
     const res = await fetch("/api/register", {
@@ -95,7 +93,6 @@ export default function RegisterPage() {
               <Label htmlFor="password">{t("passwordHint")}</Label>
               <PasswordInput id="password" autoComplete="new-password" />
             </div>
-            <Turnstile />
             {error ? (
               <p className="text-sm text-destructive">{error}</p>
             ) : null}

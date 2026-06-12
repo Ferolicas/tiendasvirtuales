@@ -6,7 +6,6 @@ import { registerSchema } from "@/lib/validations/auth";
 import { rateLimit, clientIdentifier } from "@/lib/rate-limit";
 import { createAuthToken } from "@/lib/tokens";
 import { sendVerificationEmail } from "@/lib/email";
-import { verifyTurnstile } from "@/lib/turnstile";
 
 export async function POST(req: Request) {
   if (!rateLimit(`register:${clientIdentifier(req)}`, 5, 60_000)) {
@@ -14,14 +13,6 @@ export async function POST(req: Request) {
   }
 
   const body = await req.json().catch(() => null);
-  const human = await verifyTurnstile(
-    (body as { turnstileToken?: unknown } | null)?.turnstileToken,
-    clientIdentifier(req)
-  );
-  if (!human) {
-    return Response.json({ error: "turnstile" }, { status: 403 });
-  }
-
   const result = registerSchema.safeParse(body);
   if (!result.success) {
     return Response.json({ error: result.error.flatten() }, { status: 400 });

@@ -21,10 +21,6 @@ export default async function CookiesPage() {
             the dashboard.
           </li>
           <li>Locale cookie: remembers your language preference.</li>
-          <li>
-            Cloudflare Turnstile may set technical cookies to distinguish
-            humans from bots on forms.
-          </li>
         </ul>
         <h2>Analytics</h2>
         <p>
@@ -56,10 +52,6 @@ export default async function CookiesPage() {
           en el panel.
         </li>
         <li>Cookie de idioma: recuerda tu preferencia de idioma.</li>
-        <li>
-          Cloudflare Turnstile puede establecer cookies técnicas para
-          distinguir humanos de bots en los formularios.
-        </li>
       </ul>
       <h2>Analítica</h2>
       <p>

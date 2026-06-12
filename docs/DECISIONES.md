@@ -76,7 +76,8 @@
 - **Roles**: dueño + **empleados** desde v1. Tabla `store_members` con rol
   (`owner` | `staff`); staff puede gestionar productos y pedidos pero no
   cobros, plan ni borrado de tienda.
-- **Anti-spam**: Cloudflare Turnstile (invisible) en checkout público y registro.
+- **Anti-spam**: rate limiting por IP en registro y checkout. Se descartó
+  Cloudflare Turnstile (2026-06-12): bloqueaba registros reales de clientes.
 - **Email auth**: verificación de email al registrarse + recuperación de
   contraseña, ambos vía Resend con plantillas propias.
 - **Ya implementado de base**: Zod en todos los endpoints, rate limiting

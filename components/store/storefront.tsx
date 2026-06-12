@@ -35,7 +35,6 @@ import {
   DrawerTitle,
 } from "@/components/ui/drawer";
 import { EmptyState } from "@/components/shared/empty-state";
-import { Turnstile } from "@/components/shared/turnstile";
 import { VendiDot, VendiLiveDot } from "@/components/shared/vendi-dot";
 import { TrackOrder } from "@/components/store/track-order";
 import { formatPrice } from "@/lib/format";
@@ -833,7 +832,6 @@ function CartDrawer({
           productId: l.product.id,
           quantity: l.quantity,
         })),
-        turnstileToken: form.get("cf-turnstile-response") ?? undefined,
       }),
     });
     setSending(false);
@@ -1033,7 +1031,6 @@ function CartDrawer({
                   <span>{t("total")}</span>
                   <span>{formatPrice(total, store.currency)}</span>
                 </div>
-                <Turnstile />
                 {payment === "card" ? (
                   <p className="text-xs font-light text-muted-foreground">
                     {t("payNote")}
