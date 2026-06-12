@@ -2,6 +2,7 @@ import {
   ArrowRight,
   Bell,
   Check,
+  Compass,
   CreditCard,
   Globe,
   Package,
@@ -56,6 +57,16 @@ export default async function HomePage() {
             vendi<span className="text-brand">.</span>
           </span>
           <nav className="flex items-center gap-1.5 sm:gap-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              asChild
+              className="sm:hidden"
+            >
+              <Link href="/explorar" aria-label={t("exploreLink")}>
+                <Compass className="size-5" />
+              </Link>
+            </Button>
             <Button
               variant="ghost"
               size="sm"
