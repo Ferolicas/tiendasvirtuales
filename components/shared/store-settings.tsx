@@ -480,41 +480,41 @@ export function LegalForm({
 export function ConnectButton({
   storeId,
   connected,
-  hasAccount = false,
 }: {
   storeId: string;
   connected: boolean;
-  hasAccount?: boolean;
 }) {
   const t = useTranslations("dashboard");
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [unavailable, setUnavailable] = useState(false);
 
-  // Retorno del onboarding: verificar contra Stripe el estado REAL.
-  const justReturned = searchParams.get("connect") === "done";
+  // Retorno del onboarding de Mercado Pago: confirmar el estado real.
+  const justReturned = searchParams.get("mp") === "done";
   useEffect(() => {
+    if (searchParams.get("mp") === "error") {
+      toast.error(t("connectErrorToast"));
+      return;
+    }
     if (!justReturned) return;
     if (connected) {
       toast.success(t("connectDoneToast"));
       return;
     }
-    if (hasAccount) {
-      void fetch(`/api/stores/${storeId}/connect`)
-        .then((r) => (r.ok ? r.json() : null))
-        .then((data) => {
-          if (data?.connected) {
-            toast.success(t("connectDoneToast"));
-            window.location.reload();
-          }
-        });
-    }
+    void fetch(`/api/stores/${storeId}/mp-connect`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data?.connected) {
+          toast.success(t("connectDoneToast"));
+          window.location.reload();
+        }
+      });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function onConnect() {
     setLoading(true);
-    const res = await fetch(`/api/stores/${storeId}/connect`, {
+    const res = await fetch(`/api/stores/${storeId}/mp-connect`, {
       method: "POST",
     });
     if (res.ok) {
@@ -543,14 +543,6 @@ export function ConnectButton({
 
   return (
     <div className="grid gap-2">
-      {hasAccount ? (
-        <Badge
-          variant="secondary"
-          className="w-fit rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300"
-        >
-          {t("connectPendingStripe")}
-        </Badge>
-      ) : null}
       {unavailable ? (
         <p className="text-sm text-muted-foreground">
           {t("billingUnavailable")}
@@ -563,11 +555,7 @@ export function ConnectButton({
         className="w-fit rounded-full"
       >
         {loading ? <Loader2 className="size-3.5 animate-spin" /> : null}
-        {loading
-          ? t("connectLoading")
-          : hasAccount
-            ? t("connectContinue")
-            : t("connectButton")}
+        {loading ? t("connectLoading") : t("connectButton")}
       </Button>
       {loading ? (
         <p className="animate-fade-in text-xs font-light text-muted-foreground">

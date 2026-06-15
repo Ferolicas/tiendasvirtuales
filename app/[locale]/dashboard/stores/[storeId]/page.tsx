@@ -81,11 +81,7 @@ export default async function StoreAdvancedPage({
             <CardDescription>{t("paymentsText")}</CardDescription>
           </CardHeader>
           <CardContent>
-            <ConnectButton
-              storeId={store.id}
-              connected={store.chargesEnabled}
-              hasAccount={Boolean(store.stripeAccountId)}
-            />
+            <ConnectButton storeId={store.id} connected={store.mpConnected} />
           </CardContent>
         </Card>
 
