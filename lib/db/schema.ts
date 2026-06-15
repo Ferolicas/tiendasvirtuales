@@ -128,6 +128,17 @@ export const stores = pgTable("stores", {
   // Solo true cuando Stripe confirma que la cuenta puede cobrar de verdad
   // (charges_enabled); tener stripeAccountId NO significa activado.
   chargesEnabled: boolean("charges_enabled").notNull().default(false),
+  // Mercado Pago (Colombia): la tienda vincula su cuenta por OAuth y Vendi
+  // cobra en su nombre reteniendo su comisión (marketplace_fee). Reemplaza a
+  // Stripe Connect para el cobro de las tiendas; Stripe se mantiene solo para
+  // la suscripción Pro de la plataforma. Los tokens son server-only.
+  mpUserId: text("mp_user_id"),
+  mpAccessToken: text("mp_access_token"),
+  mpRefreshToken: text("mp_refresh_token"),
+  mpPublicKey: text("mp_public_key"),
+  mpTokenExpiresAt: timestamp("mp_token_expires_at", { withTimezone: true }),
+  // Solo true cuando la tienda completó el OAuth y tiene tokens válidos.
+  mpConnected: boolean("mp_connected").notNull().default(false),
   stripeCustomerId: text("stripe_customer_id"),
   stripeSubscriptionId: text("stripe_subscription_id"),
   subscriptionStatus: text("subscription_status"),
@@ -190,6 +201,8 @@ export const orders = pgTable("orders", {
   status: orderStatusEnum("status").notNull().default("pending"),
   cancelReason: text("cancel_reason"),
   stripePaymentIntentId: text("stripe_payment_intent_id"),
+  // ID del pago en Mercado Pago (cobro de la tienda vía marketplace).
+  mpPaymentId: text("mp_payment_id"),
   // Timestamps por fase: contadores de la comanda y métricas de cocina.
   acceptedAt: timestamp("accepted_at", { withTimezone: true }),
   readyAt: timestamp("ready_at", { withTimezone: true }),
