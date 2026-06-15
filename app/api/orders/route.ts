@@ -11,6 +11,8 @@ import { createOrderSchema } from "@/lib/validations/order";
 import { rateLimit, clientIdentifier } from "@/lib/rate-limit";
 import { emitToStore } from "@/lib/realtime";
 import { getStripe, stripeConfigured } from "@/lib/stripe";
+import { mpConfigured, mpCreatePreference } from "@/lib/mercadopago";
+import { mpValidAccessToken } from "@/lib/mp-tokens";
 import { feeFor } from "@/lib/plan";
 import { verticalFor } from "@/lib/verticals";
 import { sendPushToUser } from "@/lib/push";
@@ -214,10 +216,71 @@ export async function POST(req: Request) {
     ]);
   })().catch((err) => console.error("[orders] emails fallaron:", err));
 
-  // Cobro con tarjeta vía Stripe Connect (cargo directo en la cuenta de la
-  // tienda con comisión de plataforma según el plan del dueño).
+  // Cobro online. Si la tienda tiene Mercado Pago conectado (Colombia, con
+  // PSE) se usa su Checkout Pro; si no, Stripe Connect (legado). En ambos,
+  // Vendi retiene su comisión por venta según el plan del dueño.
   let checkoutUrl: string | null = null;
   if (
+    paymentMethod === "card" &&
+    mpConfigured() &&
+    store.mpConnected &&
+    store.mpAccessToken
+  ) {
+    try {
+      const [owner] = await db
+        .select({ plan: users.plan })
+        .from(users)
+        .where(eq(users.id, store.ownerId))
+        .limit(1);
+
+      const token = await mpValidAccessToken(store);
+      const appUrl = process.env.APP_URL ?? "http://localhost:3000";
+      // La BD guarda importes en céntimos (×100, ver lib/format); Mercado Pago
+      // los quiere en unidades de la moneda (pesos en COP).
+      const toUnit = (cents: number) => Math.round(cents) / 100;
+
+      const mpItems = items.map((i) => {
+        const product = productById.get(i.productId);
+        return {
+          id: i.productId,
+          title: product?.name ?? "Producto",
+          quantity: i.quantity,
+          unit_price: toUnit(product?.priceCents ?? 0),
+          currency_id: store.currency,
+        };
+      });
+      if (fulfillment === "delivery" && store.shippingCents > 0) {
+        mpItems.push({
+          id: "shipping",
+          title: "Envío",
+          quantity: 1,
+          unit_price: toUnit(store.shippingCents),
+          currency_id: store.currency,
+        });
+      }
+
+      const pref = await mpCreatePreference(token, {
+        items: mpItems,
+        // Comisión de Vendi: se descuenta del importe del vendedor (igual que
+        // el application_fee de Stripe).
+        marketplace_fee: toUnit(feeFor(owner?.plan ?? "free", totalCents)),
+        payer: { name: customerName, email: customerEmail },
+        external_reference: order.id,
+        metadata: { order_id: order.id },
+        notification_url: `${appUrl}/api/webhooks/mercadopago`,
+        back_urls: {
+          success: `${appUrl}/o/${order.id}`,
+          pending: `${appUrl}/o/${order.id}`,
+          failure: `${appUrl}/s/${store.slug}?paid=0`,
+        },
+        auto_return: "approved",
+      });
+      checkoutUrl = pref.init_point ?? null;
+    } catch (err) {
+      // El pedido queda "pending"; la tienda lo gestiona manualmente.
+      console.error("[orders] Mercado Pago preferencia falló:", err);
+    }
+  } else if (
     paymentMethod === "card" &&
     stripeConfigured() &&
     store.stripeAccountId &&
