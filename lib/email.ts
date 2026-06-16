@@ -66,6 +66,28 @@ export async function sendPasswordResetEmail(to: string, url: string) {
   );
 }
 
+// Email al comprador cuando Mercado Pago confirma el pago de su pedido.
+export async function sendPaymentConfirmedEmail(
+  to: string,
+  data: {
+    storeName: string;
+    reference: string;
+    totalFormatted: string;
+    trackUrl: string;
+  }
+) {
+  const appUrl = process.env.APP_URL ?? "https://vendi.olcas.app";
+  await send(
+    to,
+    `Pago confirmado · ${data.reference} · ${data.storeName}`,
+    layout(`
+      <h1 style="font-size:18px">¡Pago confirmado! 🎉</h1>
+      <p style="font-size:14px;line-height:1.6;margin-top:12px">Tu pago del pedido <strong>${data.reference}</strong> en <strong>${data.storeName}</strong> por <strong>${data.totalFormatted}</strong> se procesó con éxito. Tu pedido ya está en marcha.</p>
+      <a href="${appUrl}${data.trackUrl}" style="display:inline-block;background:#1c1917;color:#fff;padding:12px 24px;border-radius:999px;text-decoration:none;font-size:14px;margin:16px 0">Seguir mi pedido en vivo</a>
+    `)
+  );
+}
+
 export interface OrderEmailData {
   storeName: string;
   storeLogoUrl: string | null;

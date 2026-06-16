@@ -13,6 +13,7 @@ import {
 import { mpValidAccessToken } from "@/lib/mp-tokens";
 import { emitToStore } from "@/lib/realtime";
 import { sendPushToUser } from "@/lib/push";
+import { sendPaymentConfirmedEmail } from "@/lib/email";
 import { formatPrice } from "@/lib/format";
 
 // Webhook de Mercado Pago (avisos de pago de los pedidos de las tiendas).
@@ -137,6 +138,13 @@ export async function POST(req: Request) {
           url: "/dashboard/orders",
           tag: updated.id,
         }).catch((err) => console.error("[mp] push de pago falló:", err));
+        // Email al comprador confirmando el pago.
+        void sendPaymentConfirmedEmail(updated.customerEmail, {
+          storeName: store.name,
+          reference: `#${updated.orderNumber}`,
+          totalFormatted: formatPrice(updated.totalCents, store.currency),
+          trackUrl: `/o/${updated.id}`,
+        }).catch((err) => console.error("[mp] email de pago falló:", err));
       }
 
     }
