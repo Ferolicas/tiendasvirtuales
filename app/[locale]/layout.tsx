@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { notFound } from "next/navigation";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
@@ -58,6 +58,14 @@ export async function generateMetadata({
     },
   };
 }
+
+// El teclado móvil ENCOGE el viewport (en vez de superponerse): evita la
+// franja blanca bajo los formularios dentro de drawers en iOS/Android.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  interactiveWidget: "resizes-content",
+};
 
 export default async function LocaleLayout({
   children,

@@ -954,7 +954,6 @@ function CartDrawer({
                     minLength={2}
                     autoComplete="name"
                     required
-                    autoFocus
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
