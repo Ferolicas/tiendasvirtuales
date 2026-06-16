@@ -6,7 +6,6 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { AccountPanel } from "@/components/dashboard/account-panel";
-import { SubTabs } from "@/components/dashboard/sub-tabs";
 import { PushCard } from "@/components/dashboard/push-card";
 import { BillingCard } from "@/components/shared/billing-card";
 import { DangerZone } from "@/components/shared/danger-zone";
@@ -38,7 +37,6 @@ export default async function AccountPage() {
 
   return (
     <div className="grid gap-8">
-      <SubTabs />
       <AccountPanel
         profile={{
           email: me.email,

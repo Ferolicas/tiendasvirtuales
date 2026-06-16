@@ -1,10 +1,13 @@
 import { redirect } from "next/navigation";
-import { getTranslations } from "next-intl/server";
-import { auth, signOut } from "@/auth";
+import { eq } from "drizzle-orm";
+import { auth } from "@/auth";
+import { db } from "@/lib/db";
+import { users } from "@/lib/db/schema";
 import { Link } from "@/i18n/navigation";
-import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { MasterTabs } from "@/components/dashboard/master-tabs";
+import { VendorMenu } from "@/components/dashboard/vendor-menu";
+import { ProBadge } from "@/components/dashboard/pro-badge";
 
 export default async function DashboardLayout({
   children,
@@ -13,38 +16,28 @@ export default async function DashboardLayout({
   if (!session?.user) redirect("/login");
   // Los clientes no entran al panel de vendedor: a su home (Explorar).
   if (session.user.role === "customer") redirect("/explorar");
-  const t = await getTranslations("common");
+
+  const [me] = await db
+    .select({ name: users.name, plan: users.plan })
+    .from(users)
+    .where(eq(users.id, session.user.id))
+    .limit(1);
+  const name = me?.name ?? session.user.name ?? "";
 
   return (
     <div className="flex min-h-screen flex-col">
       <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3.5 sm:px-6">
           <Link
-            href="/dashboard"
+            href="/dashboard/orders"
             className="text-lg font-extrabold tracking-tight"
           >
             vendi<span className="text-brand">.</span>
           </Link>
           <div className="flex items-center gap-3">
             <ThemeToggle />
-            <span className="hidden text-sm text-muted-foreground sm:inline">
-              {session.user.email}
-            </span>
-            <form
-              action={async () => {
-                "use server";
-                await signOut({ redirectTo: "/" });
-              }}
-            >
-              <Button
-                variant="outline"
-                size="sm"
-                type="submit"
-                className="rounded-full"
-              >
-                {t("logout")}
-              </Button>
-            </form>
+            {me?.plan === "free" ? <ProBadge /> : null}
+            <VendorMenu name={name} />
           </div>
         </div>
       </header>

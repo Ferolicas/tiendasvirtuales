@@ -5,7 +5,6 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { stores, users } from "@/lib/db/schema";
 import { StoresManager } from "@/components/dashboard/stores-manager";
-import { SubTabs } from "@/components/dashboard/sub-tabs";
 
 export async function generateMetadata() {
   const t = await getTranslations("dashboard");
@@ -39,7 +38,6 @@ export default async function StoresPage() {
 
   return (
     <div className="grid gap-8">
-      <SubTabs />
       <StoresManager
         stores={own.map((store) => ({
           id: store.id,

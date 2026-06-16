@@ -21,7 +21,7 @@ function LoginForm() {
   const t = useTranslations("auth");
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") ?? "/dashboard";
+  const callbackUrl = searchParams.get("callbackUrl") ?? "/dashboard/orders";
   const verified = searchParams.get("verified");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);

@@ -8,7 +8,6 @@ import {
   ProductsManager,
   type CategoryOption,
 } from "@/components/dashboard/products-manager";
-import { SubTabs } from "@/components/dashboard/sub-tabs";
 
 export async function generateMetadata() {
   const t = await getTranslations("dashboard");
@@ -52,7 +51,6 @@ export default async function ProductsPage() {
 
   return (
     <div className="grid gap-8">
-      <SubTabs />
       <ProductsManager
         stores={own}
         products={productList.map((product) => ({
