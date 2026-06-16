@@ -5,8 +5,10 @@ import { db } from "@/lib/db";
 import { orders, products, reviews, stores } from "@/lib/db/schema";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
+import { CustomerMenu } from "@/components/shared/customer-menu";
 import { VendiDot } from "@/components/shared/vendi-dot";
 import { ExploreGrid } from "@/components/store/explore-grid";
+import { auth } from "@/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -45,6 +47,7 @@ async function holidayToday(country: string): Promise<string | null> {
 export default async function ExplorePage() {
   const t = await getTranslations("explore");
   const tc = await getTranslations("common");
+  const session = await auth();
 
   const list = await db
     .select()
@@ -182,9 +185,13 @@ export default async function ExplorePage() {
           </Link>
           <nav className="flex items-center gap-1.5 sm:gap-3">
             <ThemeToggle />
-            <Button size="sm" asChild className="rounded-full px-4">
-              <Link href="/register">{tc("register")}</Link>
-            </Button>
+            {session?.user?.role === "customer" ? (
+              <CustomerMenu name={session.user.name ?? ""} />
+            ) : (
+              <Button size="sm" asChild className="rounded-full px-4">
+                <Link href="/register">{tc("register")}</Link>
+              </Button>
+            )}
           </nav>
         </div>
       </header>
