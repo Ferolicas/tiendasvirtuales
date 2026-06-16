@@ -9,12 +9,13 @@ import { Link } from "@/i18n/navigation";
 // pestañas; el resto (perfil/datos+suscripción, tiendas, activar pagos) aquí.
 export function VendorMenu({
   name,
-  needsPayments,
+  unconnectedStoreId,
 }: {
   name: string;
-  needsPayments?: boolean;
+  unconnectedStoreId?: string | null;
 }) {
   const [open, setOpen] = useState(false);
+  const [activating, setActivating] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const initial = name.trim().charAt(0).toUpperCase() || "?";
 
@@ -27,6 +28,23 @@ export function VendorMenu({
     document.addEventListener("mousedown", onClick);
     return () => document.removeEventListener("mousedown", onClick);
   }, []);
+
+  // Inicia el OAuth de Mercado Pago directamente para la tienda sin pagos.
+  async function activatePayments() {
+    if (!unconnectedStoreId || activating) return;
+    setActivating(true);
+    const res = await fetch(`/api/stores/${unconnectedStoreId}/mp-connect`, {
+      method: "POST",
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.url) {
+        window.location.assign(data.url);
+        return;
+      }
+    }
+    setActivating(false);
+  }
 
   return (
     <div ref={ref} className="relative">
@@ -45,13 +63,16 @@ export function VendorMenu({
           </div>
           <MenuLink href="/dashboard" icon={User} label="Mi perfil" />
           <MenuLink href="/dashboard/stores" icon={Store} label="Tiendas" />
-          {needsPayments ? (
-            <MenuLink
-              href="/dashboard/stores"
-              icon={CreditCard}
-              label="Activar pagos online"
-              highlight
-            />
+          {unconnectedStoreId ? (
+            <button
+              type="button"
+              onClick={activatePayments}
+              disabled={activating}
+              className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm font-medium text-brand hover:bg-secondary disabled:opacity-60"
+            >
+              <CreditCard className="size-4 text-brand" />
+              Activar pagos online
+            </button>
           ) : null}
           <button
             type="button"
@@ -71,23 +92,17 @@ function MenuLink({
   href,
   icon: Icon,
   label,
-  highlight,
 }: {
   href: string;
   icon: typeof User;
   label: string;
-  highlight?: boolean;
 }) {
   return (
     <Link
       href={href}
-      className={`flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium hover:bg-secondary ${
-        highlight ? "text-brand" : ""
-      }`}
+      className="flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium hover:bg-secondary"
     >
-      <Icon
-        className={`size-4 ${highlight ? "text-brand" : "text-muted-foreground"}`}
-      />
+      <Icon className="size-4 text-muted-foreground" />
       {label}
     </Link>
   );

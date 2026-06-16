@@ -37,7 +37,7 @@ export default async function DashboardLayout({
       .limit(1),
   ]);
   const name = me?.name ?? session.user.name ?? "";
-  const needsPayments = unconnected.length > 0;
+  const unconnectedStoreId = unconnected[0]?.id ?? null;
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -53,7 +53,7 @@ export default async function DashboardLayout({
             <ThemeToggle />
             <NotificationBell />
             {me?.plan === "free" ? <ProBadge /> : null}
-            <VendorMenu name={name} needsPayments={needsPayments} />
+            <VendorMenu name={name} unconnectedStoreId={unconnectedStoreId} />
           </div>
         </div>
       </header>

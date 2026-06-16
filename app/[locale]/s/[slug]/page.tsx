@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { and, asc, desc, eq, isNull } from "drizzle-orm";
-import { Clock, Globe, MapPin, Phone, Star } from "lucide-react";
+import { ArrowLeft, Clock, Globe, MapPin, Phone } from "lucide-react";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
@@ -102,6 +102,13 @@ export default async function PublicStorePage({
             title={store.name}
             text={store.description ?? store.name}
           />
+          <Link
+            href="/explorar"
+            aria-label="Volver a tiendas"
+            className="absolute left-4 top-4 z-10 flex size-9 items-center justify-center rounded-full bg-background/80 text-foreground shadow-soft backdrop-blur transition-colors hover:bg-background"
+          >
+            <ArrowLeft className="size-5" />
+          </Link>
         </div>
 
         <div className="mx-auto max-w-5xl px-5 sm:px-6">
