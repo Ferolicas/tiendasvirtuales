@@ -149,7 +149,7 @@
     "billingTitle": "Your plan",
     "billingFreeText": "You're on the Free plan: 1 store, 10 products and a 3% fee per sale.",
     "billingProText": "You're Pro: unlimited stores and products with only a 1% fee.",
-    "upgradeButton": "Go Pro — $50,000 COP/mo",
+    "upgradeButton": "Go Pro",
     "renewButton": "Renew Pro",
     "proUntilLabel": "Pro active until {date}",
     "billingPending": "Your payment is processing. As soon as Mercado Pago confirms it, your Pro activates.",

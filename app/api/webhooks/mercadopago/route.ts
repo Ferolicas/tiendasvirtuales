@@ -85,23 +85,26 @@ export async function POST(req: Request) {
         const payment = await mpGetPayment(mpPlatformToken(), String(paymentId));
         const ref = payment.external_reference ?? "";
         if (payment.status === "approved" && ref.startsWith("pro:")) {
-          const proUserId = ref.slice(4);
+          // "pro:<userId>:<meses>"
+          const [proUserId, monthsStr] = ref.slice(4).split(":");
+          const months = Number(monthsStr) || 1;
           const [u] = await db
             .select({ proUntil: users.proUntil })
             .from(users)
             .where(eq(users.id, proUserId))
             .limit(1);
-          // Suma 30 días desde hoy, o desde el vencimiento si aún está vigente.
-          const base =
+          // Extiende N meses desde hoy, o desde el vencimiento si sigue vigente.
+          const until =
             u?.proUntil && u.proUntil.getTime() > Date.now()
-              ? u.proUntil.getTime()
-              : Date.now();
+              ? new Date(u.proUntil)
+              : new Date();
+          until.setMonth(until.getMonth() + months);
           await db
             .update(users)
             .set({
               plan: "pro",
               subscriptionStatus: "active",
-              proUntil: new Date(base + 30 * 24 * 60 * 60 * 1000),
+              proUntil: until,
             })
             .where(eq(users.id, proUserId));
         }

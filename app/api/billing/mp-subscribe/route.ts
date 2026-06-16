@@ -10,9 +10,14 @@ import {
 import { rateLimit, clientIdentifier } from "@/lib/rate-limit";
 
 // Suscripción Vendi Pro cobrada por Mercado Pago en la cuenta de Vendi (no es
-// split). Pago manual mensual; al aprobarse, el webhook marca Pro hasta la
-// fecha de vencimiento. Devuelve la URL de Checkout Pro para redirigir.
-const PRO_PRICE_COP = 50000;
+// split). Al aprobarse, el webhook marca Pro hasta la fecha de vencimiento.
+// Planes con descuento por pago adelantado.
+const PLANS = {
+  "1": { months: 1, price: 50000, label: "1 mes" },
+  "3": { months: 3, price: 135000, label: "3 meses (-10%)" },
+  "12": { months: 12, price: 480000, label: "1 año (-20%)" },
+} as const;
+type PeriodId = keyof typeof PLANS;
 
 export async function POST(req: Request) {
   const session = await auth();
@@ -35,21 +40,26 @@ export async function POST(req: Request) {
     return new Response("Unauthorized", { status: 401 });
   }
 
+  const body = (await req.json().catch(() => ({}))) as { period?: string };
+  const period: PeriodId =
+    body.period === "3" ? "3" : body.period === "12" ? "12" : "1";
+  const plan = PLANS[period];
+
   const appUrl = process.env.APP_URL ?? "http://localhost:3000";
   try {
     const pref = await mpCreatePreference(mpPlatformToken(), {
       items: [
         {
           id: "vendi-pro",
-          title: "Vendi Pro — 1 mes",
+          title: `Vendi Pro — ${plan.label}`,
           quantity: 1,
-          unit_price: PRO_PRICE_COP,
+          unit_price: plan.price,
           currency_id: "COP",
         },
       ],
       payer: { name: user.name, email: user.email },
-      // El prefijo "pro:" distingue este pago (suscripción) de los pedidos.
-      external_reference: `pro:${user.id}`,
+      // "pro:<userId>:<meses>": distingue la suscripción y cuántos meses dar.
+      external_reference: `pro:${user.id}:${plan.months}`,
       metadata: { user_id: user.id, kind: "pro" },
       notification_url: `${appUrl}/api/webhooks/mercadopago`,
       back_urls: {

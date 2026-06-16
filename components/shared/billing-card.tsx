@@ -15,9 +15,28 @@ import {
 } from "@/components/ui/card";
 import { ProCelebration } from "@/components/shared/pro-celebration";
 
-// Vendi Pro se cobra por Mercado Pago (pago manual mensual, $50.000 COP). Al
-// pulsar se crea la preferencia y se redirige a Mercado Pago; al volver con
-// billing=success se celebra. Renovar es el mismo botón.
+// Periodos de la suscripción Pro con descuento por pago adelantado.
+const PERIODS = [
+  { id: "1", label: "1 mes", per: "$50.000/mes", price: "$50.000", save: null },
+  {
+    id: "3",
+    label: "3 meses",
+    per: "$45.000/mes",
+    price: "$135.000",
+    save: "-10%",
+  },
+  {
+    id: "12",
+    label: "1 año",
+    per: "$40.000/mes",
+    price: "$480.000",
+    save: "-20%",
+  },
+] as const;
+
+// Vendi Pro se cobra por Mercado Pago (pago adelantado, $50.000 COP/mes con
+// descuento por 3 meses o 1 año). Al pulsar se crea la preferencia y se
+// redirige a Mercado Pago; al volver con billing=success se celebra.
 export function BillingCard({
   plan,
   proUntil,
@@ -31,6 +50,7 @@ export function BillingCard({
   const [loading, setLoading] = useState(false);
   const [unavailable, setUnavailable] = useState(false);
   const [celebrated, setCelebrated] = useState(false);
+  const [period, setPeriod] = useState<string>("3");
 
   if (billing === "success" && !celebrated) {
     return (
@@ -42,7 +62,11 @@ export function BillingCard({
 
   async function startCheckout() {
     setLoading(true);
-    const res = await fetch("/api/billing/mp-subscribe", { method: "POST" });
+    const res = await fetch("/api/billing/mp-subscribe", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ period }),
+    });
     if (res.ok) {
       const data = await res.json();
       if (data.url) {
@@ -100,6 +124,38 @@ export function BillingCard({
             {t("billingUnavailable")}
           </p>
         ) : null}
+
+        {/* Elige periodo: 3 meses −10%, 1 año −20% */}
+        <div className="grid gap-2">
+          {PERIODS.map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              onClick={() => setPeriod(p.id)}
+              className={`flex items-center justify-between rounded-2xl border p-3 text-left transition-colors ${
+                period === p.id
+                  ? "border-primary bg-primary/5"
+                  : "hover:border-muted-foreground/30"
+              }`}
+            >
+              <div>
+                <p className="text-sm font-bold tracking-tight">{p.label}</p>
+                <p className="text-xs text-muted-foreground">{p.per}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                {p.save ? (
+                  <Badge className="rounded-full bg-green-600/12 text-green-700 dark:text-green-300">
+                    {p.save}
+                  </Badge>
+                ) : null}
+                <span className="text-sm font-extrabold tracking-tight">
+                  {p.price}
+                </span>
+              </div>
+            </button>
+          ))}
+        </div>
+
         <Button
           onClick={startCheckout}
           disabled={loading}
