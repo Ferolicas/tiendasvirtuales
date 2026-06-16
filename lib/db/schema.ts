@@ -55,6 +55,9 @@ export const users = pgTable("users", {
   stripeCustomerId: text("stripe_customer_id"),
   stripeSubscriptionId: text("stripe_subscription_id"),
   subscriptionStatus: text("subscription_status"),
+  // Vendi Pro por Mercado Pago (pago manual mensual): hasta cuándo es Pro.
+  // Un cron diario degrada a free cuando vence.
+  proUntil: timestamp("pro_until", { withTimezone: true }),
   deletedAt: timestamp("deleted_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()

@@ -13,6 +13,18 @@ export function mpConfigured(): boolean {
   return Boolean(process.env.MP_CLIENT_ID && process.env.MP_CLIENT_SECRET);
 }
 
+// Token de la cuenta PROPIA de Vendi: se usa para cobrar la suscripción Pro a
+// los dueños (ingreso de Vendi, NO un split) y para leer esos pagos.
+export function mpPlatformConfigured(): boolean {
+  return Boolean(process.env.MP_ACCESS_TOKEN);
+}
+
+export function mpPlatformToken(): string {
+  const token = process.env.MP_ACCESS_TOKEN;
+  if (!token) throw new Error("MP_ACCESS_TOKEN no está configurada");
+  return token;
+}
+
 export function mpRedirectUri(): string {
   return (
     process.env.MP_REDIRECT_URI ??

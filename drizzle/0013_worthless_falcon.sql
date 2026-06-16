@@ -1,0 +1,1 @@
+ALTER TABLE "users" ADD COLUMN "pro_until" timestamp with time zone;

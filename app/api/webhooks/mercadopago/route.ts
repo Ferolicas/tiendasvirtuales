@@ -4,8 +4,12 @@ import {
   InvalidWebhookSignatureError,
 } from "mercadopago";
 import { db } from "@/lib/db";
-import { orders, stores } from "@/lib/db/schema";
-import { mpGetPayment } from "@/lib/mercadopago";
+import { orders, stores, users } from "@/lib/db/schema";
+import {
+  mpGetPayment,
+  mpPlatformConfigured,
+  mpPlatformToken,
+} from "@/lib/mercadopago";
 import { mpValidAccessToken } from "@/lib/mp-tokens";
 import { emitToStore } from "@/lib/realtime";
 import { sendPushToUser } from "@/lib/push";
@@ -71,7 +75,39 @@ export async function POST(req: Request) {
     .from(stores)
     .where(eq(stores.mpUserId, userId))
     .limit(1);
+
+  // Sin tienda para ese user_id → puede ser un pago de la suscripción Pro,
+  // cobrado en la cuenta PROPIA de Vendi (no por split).
   if (!store?.mpAccessToken) {
+    if (mpPlatformConfigured()) {
+      try {
+        const payment = await mpGetPayment(mpPlatformToken(), String(paymentId));
+        const ref = payment.external_reference ?? "";
+        if (payment.status === "approved" && ref.startsWith("pro:")) {
+          const proUserId = ref.slice(4);
+          const [u] = await db
+            .select({ proUntil: users.proUntil })
+            .from(users)
+            .where(eq(users.id, proUserId))
+            .limit(1);
+          // Suma 30 días desde hoy, o desde el vencimiento si aún está vigente.
+          const base =
+            u?.proUntil && u.proUntil.getTime() > Date.now()
+              ? u.proUntil.getTime()
+              : Date.now();
+          await db
+            .update(users)
+            .set({
+              plan: "pro",
+              subscriptionStatus: "active",
+              proUntil: new Date(base + 30 * 24 * 60 * 60 * 1000),
+            })
+            .where(eq(users.id, proUserId));
+        }
+      } catch (err) {
+        console.error("[mp] webhook de suscripción Pro falló:", err);
+      }
+    }
     return Response.json({ received: true });
   }
 

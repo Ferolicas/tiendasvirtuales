@@ -29,6 +29,7 @@ export default async function AccountPage() {
       taxId: users.taxId,
       address: users.address,
       plan: users.plan,
+      proUntil: users.proUntil,
     })
     .from(users)
     .where(eq(users.id, session.user.id))
@@ -49,7 +50,10 @@ export default async function AccountPage() {
       />
       <PushCard />
       <Suspense>
-        <BillingCard plan={me.plan} />
+        <BillingCard
+          plan={me.plan}
+          proUntil={me.proUntil ? me.proUntil.toISOString() : null}
+        />
       </Suspense>
       <DangerZone />
     </div>
