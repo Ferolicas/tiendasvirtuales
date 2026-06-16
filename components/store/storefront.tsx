@@ -902,6 +902,10 @@ function CartDrawer({
   return (
     <Drawer
       open={open}
+      // El teclado lo gestiona el viewport (interactive-widget=resizes-content);
+      // desactivamos el reposicionamiento de vaul para que no se duplique y
+      // aparezca un hueco. El contenido simplemente hace scroll.
+      repositionInputs={false}
       onOpenChange={(value) => {
         if (!value) {
           onClose();
