@@ -12,6 +12,8 @@ import {
 import type { StoreHoursRow } from "@/lib/schedule";
 
 export const planEnum = pgEnum("plan", ["free", "pro"]);
+// Rol de la cuenta: vendedor (panel de gestión) o cliente (panel de compras).
+export const userRoleEnum = pgEnum("user_role", ["vendor", "customer"]);
 // Ciclo de vida v2: pending (sin pagar) → paid (entrante) → preparing →
 // ready (en reparto / listo para recoger) → delivered. "shipped" es legado
 // de v1 y se trata como delivered en la UI.
@@ -52,6 +54,9 @@ export const users = pgTable("users", {
   // Suscripción de la plataforma: el plan vive en el usuario (Pro desbloquea
   // tiendas/productos ilimitados en toda la cuenta).
   plan: planEnum("plan").notNull().default("free"),
+  // Rol: los vendedores entran al panel de gestión; los clientes, a su panel
+  // de compras. Las cuentas existentes quedan como vendedor.
+  role: userRoleEnum("role").notNull().default("vendor"),
   stripeCustomerId: text("stripe_customer_id"),
   stripeSubscriptionId: text("stripe_subscription_id"),
   subscriptionStatus: text("subscription_status"),
