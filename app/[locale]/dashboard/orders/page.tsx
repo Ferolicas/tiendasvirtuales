@@ -37,6 +37,7 @@ export default async function OrdersDashboardPage() {
       id: stores.id,
       name: stores.name,
       storeCategory: stores.storeCategory,
+      currency: stores.currency,
     })
     .from(stores)
     .where(
@@ -195,7 +196,7 @@ export default async function OrdersDashboardPage() {
         month: topMonth.map((r) => ({ name: r.name, quantity: Number(r.quantity) })),
         year: topYear.map((r) => ({ name: r.name, quantity: Number(r.quantity) })),
       }}
-      currency="EUR"
+      currency={ownStores[0]?.currency ?? "COP"}
     />
   );
 }

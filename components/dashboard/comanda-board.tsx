@@ -40,7 +40,6 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
-import { EmptyState } from "@/components/shared/empty-state";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { VendiLiveDot } from "@/components/shared/vendi-dot";
 import { formatPrice } from "@/lib/format";
@@ -364,7 +363,7 @@ export function ComandaBoard({
   const topList = top[period];
 
   return (
-    <div className="grid gap-8">
+    <div className="grid grid-cols-1 gap-8">
       <div className="flex items-center gap-2 text-xs text-muted-foreground">
         {connected ? (
           <VendiLiveDot />
@@ -463,7 +462,7 @@ export function ComandaBoard({
       </div>
 
       {/* Tablero de cocina */}
-      <div className="grid gap-5 lg:grid-cols-3">
+      <div className="grid min-w-0 gap-5 lg:grid-cols-3">
         <ComandaColumn
           title={t("colIncoming")}
           icon={Inbox}
@@ -533,8 +532,8 @@ export function ComandaBoard({
       </div>
 
       {/* Pestañas de historial */}
-      <div className="grid gap-4">
-        <div className="flex gap-1.5">
+      <div className="grid min-w-0 gap-4">
+        <div className="flex flex-wrap gap-1.5">
           {(
             [
               ["delivered", t("tabDelivered"), delivered.length],
@@ -579,7 +578,9 @@ export function ComandaBoard({
                 className="flex cursor-pointer flex-wrap items-center justify-between gap-2 rounded-xl border px-3 py-2 text-left text-sm transition-colors hover:bg-secondary/60"
               >
                 <span className="font-bold">#{order.orderNumber}</span>
-                <span className="flex-1 truncate">{order.customerName}</span>
+                <span className="min-w-0 flex-1 truncate">
+                  {order.customerName}
+                </span>
                 {order.review ? (
                   <span className="flex items-center gap-0.5 text-xs font-bold text-amber-500">
                     {order.review.rating}★
@@ -729,7 +730,7 @@ export function ComandaBoard({
 
                 <div className="grid gap-0.5 border-y py-2">
                   {detailOrder.lines.map((line, i) => (
-                    <p key={i}>
+                    <p key={i} className="break-words">
                       <span className="font-bold">{line.quantity}×</span>{" "}
                       {line.name}
                     </p>
@@ -905,7 +906,7 @@ function ComandaColumn({
   const t = useTranslations("comanda");
 
   return (
-    <div className="grid content-start gap-3 rounded-3xl border bg-secondary/30 p-4">
+    <div className="grid min-w-0 content-start gap-3 rounded-3xl border bg-secondary/30 p-4">
       <p className="flex items-center justify-between font-bold tracking-tight">
         <span className="flex items-center gap-2">
           <Icon className="size-4 text-brand" />
@@ -953,7 +954,7 @@ function ComandaColumn({
 
               <div className="grid gap-0.5 border-y py-2 text-sm">
                 {order.lines.map((line, i) => (
-                  <p key={i}>
+                  <p key={i} className="break-words">
                     <span className="font-bold">{line.quantity}×</span>{" "}
                     {line.name}
                   </p>
