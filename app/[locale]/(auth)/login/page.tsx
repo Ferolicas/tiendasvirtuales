@@ -2,7 +2,7 @@
 
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { signIn } from "next-auth/react";
+import { signIn, getSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
@@ -41,7 +41,10 @@ function LoginForm() {
       setError(t("invalidCredentials"));
       return;
     }
-    router.push(callbackUrl);
+    // Routing por rol: los clientes van a su home (Explorar), los vendedores
+    // al panel (o al callbackUrl si venían de una ruta protegida).
+    const sess = await getSession();
+    router.push(sess?.user?.role === "customer" ? "/explorar" : callbackUrl);
     router.refresh();
   }
 

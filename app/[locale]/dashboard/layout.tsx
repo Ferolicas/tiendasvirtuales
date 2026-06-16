@@ -11,6 +11,8 @@ export default async function DashboardLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   const session = await auth();
   if (!session?.user) redirect("/login");
+  // Los clientes no entran al panel de vendedor: a su home (Explorar).
+  if (session.user.role === "customer") redirect("/explorar");
   const t = await getTranslations("common");
 
   return (

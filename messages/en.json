@@ -164,7 +164,7 @@
     "connectActive": "Online payments active",
     "connectLoading": "Opening Mercado Pago…",
     "connectErrorToast": "Couldn't connect Mercado Pago. Please try again.",
-    "connectPendingStripe": "Verification pending at Stripe",
+    "connectPendingStripe": "Verification pending",
     "connectContinue": "Continue activation",
     "pushTitle": "Order notifications",
     "pushText": "Get an alert on your phone or computer every time an order comes in, even with the browser closed.",

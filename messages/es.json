@@ -164,7 +164,7 @@
     "connectActive": "Pagos online activos",
     "connectLoading": "Abriendo Mercado Pago…",
     "connectErrorToast": "No se pudo conectar Mercado Pago. Inténtalo de nuevo.",
-    "connectPendingStripe": "Verificación pendiente en Stripe",
+    "connectPendingStripe": "Verificación pendiente",
     "connectContinue": "Continuar activación",
     "pushTitle": "Notificaciones de pedidos",
     "pushText": "Recibe un aviso en tu móvil u ordenador cada vez que entra un pedido, aunque el navegador esté cerrado.",
