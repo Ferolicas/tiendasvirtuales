@@ -8,6 +8,8 @@ import { orders, stores } from "@/lib/db/schema";
 import { mpGetPayment } from "@/lib/mercadopago";
 import { mpValidAccessToken } from "@/lib/mp-tokens";
 import { emitToStore } from "@/lib/realtime";
+import { sendPushToUser } from "@/lib/push";
+import { formatPrice } from "@/lib/format";
 
 // Webhook de Mercado Pago (avisos de pago de los pedidos de las tiendas).
 // Verificado por firma `x-signature` con MP_WEBHOOK_SECRET. Al aprobarse un
@@ -91,7 +93,16 @@ export async function POST(req: Request) {
           id: updated.id,
           status: updated.status,
         });
+        // Aviso al dueño de que el dinero ENTRÓ (suena aunque el navegador
+        // esté cerrado). El push al crear el pedido ya avisó del pendiente.
+        void sendPushToUser(store.ownerId, {
+          title: `💰 Pedido #${updated.orderNumber} pagado — ${formatPrice(updated.totalCents, store.currency)}`,
+          body: `${updated.customerName} · ${store.name}`,
+          url: "/dashboard/orders",
+          tag: updated.id,
+        }).catch((err) => console.error("[mp] push de pago falló:", err));
       }
+
     }
   } catch (err) {
     // 200 igualmente: evitamos que MP reintente en bucle por un fallo nuestro;
