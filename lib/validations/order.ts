@@ -8,7 +8,7 @@ export const createOrderSchema = z
     customerPhone: z.string().min(6).max(30),
     fulfillment: z.enum(["delivery", "pickup"]).default("delivery"),
     deliveryAddress: z.string().min(5).max(300).optional(),
-    paymentMethod: z.enum(["card", "in_store"]).default("card"),
+    paymentMethod: z.literal("card").default("card"),
     // Crear cuenta de cliente tras la compra (magic link para la contraseña).
     createAccount: z.boolean().optional(),
     items: z

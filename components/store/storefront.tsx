@@ -11,7 +11,6 @@ import Image from "next/image";
 import {
   ArrowLeft,
   Bike,
-  CreditCard,
   Flame,
   Loader2,
   Minus,
@@ -20,7 +19,6 @@ import {
   Sparkles,
   Store as StoreIcon,
   Trash2,
-  Wallet,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -828,7 +826,6 @@ function CartDrawer({
   const [fulfillment, setFulfillment] = useState<"delivery" | "pickup">(
     "delivery"
   );
-  const [payment, setPayment] = useState<"card" | "in_store">("card");
   const [createAccount, setCreateAccount] = useState(false);
   const [done, setDone] = useState<{
     orderNumber: number;
@@ -867,7 +864,7 @@ function CartDrawer({
         fulfillment,
         deliveryAddress:
           fulfillment === "delivery" ? form.get("address") : undefined,
-        paymentMethod: payment,
+        paymentMethod: "card",
         createAccount,
         items: lines.map((l) => ({
           productId: l.product.id,
@@ -1034,40 +1031,6 @@ function CartDrawer({
                   </div>
                 ) : null}
 
-                {/* Pago: online siempre; en tienda (recogida) o efectivo
-                    al recibir (domicilio) */}
-                <div className="grid gap-2">
-                  <Label>{t("paymentLabel")}</Label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setPayment("card")}
-                      className={`flex items-center justify-center gap-2 rounded-2xl border px-3 py-2.5 text-sm font-bold transition-colors ${
-                        payment === "card"
-                          ? "border-primary bg-primary text-primary-foreground"
-                          : "text-muted-foreground"
-                      }`}
-                    >
-                      <CreditCard className="size-4" />
-                      {t("payCard")}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setPayment("in_store")}
-                      className={`flex items-center justify-center gap-2 rounded-2xl border px-3 py-2.5 text-sm font-bold transition-colors ${
-                        payment === "in_store"
-                          ? "border-primary bg-primary text-primary-foreground"
-                          : "text-muted-foreground"
-                      }`}
-                    >
-                      <Wallet className="size-4" />
-                      {fulfillment === "pickup"
-                        ? t("payInStore")
-                        : t("payCash")}
-                    </button>
-                  </div>
-                </div>
-
                 <label className="flex cursor-pointer items-center gap-3 rounded-2xl bg-secondary/60 px-4 py-3 text-sm">
                   <input
                     type="checkbox"
@@ -1089,11 +1052,9 @@ function CartDrawer({
                   <span>{t("total")}</span>
                   <span>{formatPrice(total, store.currency)}</span>
                 </div>
-                {payment === "card" ? (
-                  <p className="text-xs font-light text-muted-foreground">
-                    {t("payNote")}
-                  </p>
-                ) : null}
+                <p className="text-xs font-light text-muted-foreground">
+                  {t("payNote")}
+                </p>
                 <div className="flex gap-2">
                   <Button
                     type="button"
