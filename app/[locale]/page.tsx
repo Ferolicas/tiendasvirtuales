@@ -10,6 +10,8 @@ import {
   Truck,
 } from "lucide-react";
 import { getTranslations } from "next-intl/server";
+import { redirect } from "next/navigation";
+import { auth } from "@/auth";
 import { Link } from "@/i18n/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,6 +21,16 @@ import { Reveal } from "@/components/shared/reveal";
 import { VendiDot } from "@/components/shared/vendi-dot";
 
 export default async function HomePage() {
+  // Si ya hay sesión, no mostramos la landing (que invita a iniciar sesión):
+  // el PWA arranca en "/", así que un usuario logueado entra directo a su
+  // espacio en vez de ver "Iniciar sesión" y creer que la sesión se perdió.
+  const session = await auth();
+  if (session?.user) {
+    redirect(
+      session.user.role === "customer" ? "/explorar" : "/dashboard/orders"
+    );
+  }
+
   const t = await getTranslations("landing");
   const tc = await getTranslations("common");
 
