@@ -2,12 +2,18 @@
 
 import { useEffect, useRef, useState } from "react";
 import { signOut } from "next-auth/react";
-import { LogOut, Store, User } from "lucide-react";
+import { CreditCard, LogOut, Store, User } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 
 // Menú de avatar del vendedor: lo importante (Pedidos/Productos) vive en las
-// pestañas; el resto (perfil/datos+suscripción, tiendas) se mueve aquí.
-export function VendorMenu({ name }: { name: string }) {
+// pestañas; el resto (perfil/datos+suscripción, tiendas, activar pagos) aquí.
+export function VendorMenu({
+  name,
+  needsPayments,
+}: {
+  name: string;
+  needsPayments?: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const initial = name.trim().charAt(0).toUpperCase() || "?";
@@ -39,6 +45,14 @@ export function VendorMenu({ name }: { name: string }) {
           </div>
           <MenuLink href="/dashboard" icon={User} label="Mi perfil" />
           <MenuLink href="/dashboard/stores" icon={Store} label="Tiendas" />
+          {needsPayments ? (
+            <MenuLink
+              href="/dashboard/stores"
+              icon={CreditCard}
+              label="Activar pagos online"
+              highlight
+            />
+          ) : null}
           <button
             type="button"
             onClick={() => signOut({ callbackUrl: "/" })}
@@ -57,17 +71,23 @@ function MenuLink({
   href,
   icon: Icon,
   label,
+  highlight,
 }: {
   href: string;
   icon: typeof User;
   label: string;
+  highlight?: boolean;
 }) {
   return (
     <Link
       href={href}
-      className="flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium hover:bg-secondary"
+      className={`flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium hover:bg-secondary ${
+        highlight ? "text-brand" : ""
+      }`}
     >
-      <Icon className="size-4 text-muted-foreground" />
+      <Icon
+        className={`size-4 ${highlight ? "text-brand" : "text-muted-foreground"}`}
+      />
       {label}
     </Link>
   );

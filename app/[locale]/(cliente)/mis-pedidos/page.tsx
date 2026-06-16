@@ -7,6 +7,7 @@ import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/shared/empty-state";
+import { OrderMiniTracker } from "@/components/store/order-mini-tracker";
 import { formatPrice } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -77,40 +78,45 @@ export default async function MisPedidosPage() {
             return (
               <div
                 key={o.id}
-                className="grid gap-3 rounded-3xl border bg-card p-5 shadow-soft sm:flex sm:items-center sm:justify-between"
+                className="grid gap-3 rounded-3xl border bg-card p-5 shadow-soft"
               >
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className="truncate font-bold tracking-tight">
-                      {o.storeName}
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="truncate font-bold tracking-tight">
+                        {o.storeName}
+                      </p>
+                      <Badge
+                        variant="secondary"
+                        className={`shrink-0 rounded-full ${s.cls}`}
+                      >
+                        {s.label}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Pedido #{o.orderNumber} ·{" "}
+                      {formatPrice(o.totalCents, o.currency)}
                     </p>
-                    <Badge
-                      variant="secondary"
-                      className={`shrink-0 rounded-full ${s.cls}`}
-                    >
-                      {s.label}
-                    </Badge>
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    Pedido #{o.orderNumber} ·{" "}
-                    {formatPrice(o.totalCents, o.currency)}
-                  </p>
-                </div>
-                <div className="flex shrink-0 gap-2">
-                  {o.status === "pending" ? (
-                    <Button asChild size="sm" className="rounded-full">
-                      <Link href={`/s/${o.storeSlug}`}>Pagar</Link>
+                  <div className="flex shrink-0 gap-2">
+                    {o.status === "pending" ? (
+                      <Button asChild size="sm" className="rounded-full">
+                        <Link href={`/s/${o.storeSlug}`}>Pagar</Link>
+                      </Button>
+                    ) : null}
+                    <Button
+                      asChild
+                      size="sm"
+                      variant="outline"
+                      className="rounded-full"
+                    >
+                      <Link href={`/o/${o.id}`}>Ver</Link>
                     </Button>
-                  ) : null}
-                  <Button
-                    asChild
-                    size="sm"
-                    variant="outline"
-                    className="rounded-full"
-                  >
-                    <Link href={`/o/${o.id}`}>Ver seguimiento</Link>
-                  </Button>
+                  </div>
                 </div>
+                {["paid", "preparing", "ready"].includes(o.status) ? (
+                  <OrderMiniTracker orderId={o.id} initialStatus={o.status} />
+                ) : null}
               </div>
             );
           })}

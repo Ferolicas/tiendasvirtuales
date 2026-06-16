@@ -280,7 +280,7 @@ export function ProductsManager({
 
   const current = editing === "new" ? null : editing;
   const currencyFor = (storeId: string) =>
-    stores.find((s) => s.id === storeId)?.currency ?? "EUR";
+    stores.find((s) => s.id === storeId)?.currency ?? "COP";
   const modalCategories = categoriesByStore[formStore] ?? [];
 
   return (

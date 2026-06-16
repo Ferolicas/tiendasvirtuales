@@ -74,7 +74,7 @@ export async function POST(req: Request) {
   const currency =
     result.data.currency ??
     currencyForCountry(result.data.country) ??
-    "EUR";
+    "COP";
 
   const [store] = await db
     .insert(stores)

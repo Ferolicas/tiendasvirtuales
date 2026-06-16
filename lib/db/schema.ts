@@ -119,7 +119,7 @@ export const stores = pgTable("stores", {
   // Media de reseñas desnormalizada para la cabecera
   ratingSum: integer("rating_sum").notNull().default(0),
   ratingCount: integer("rating_count").notNull().default(0),
-  currency: text("currency").notNull().default("EUR"),
+  currency: text("currency").notNull().default("COP"),
   shippingCents: integer("shipping_cents").notNull().default(0),
   // Dominio propio (plan Pro): apunta por DNS al VPS y Caddy emite el SSL
   // bajo demanda. domainVerifiedAt marca cuándo se comprobó el DNS.
