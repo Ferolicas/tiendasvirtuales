@@ -19,9 +19,13 @@ import { sendPushToUser } from "@/lib/push";
 import {
   sendOrderConfirmationEmail,
   sendOwnerNewOrderEmail,
+  sendPasswordResetEmail,
   type OrderEmailData,
 } from "@/lib/email";
 import { formatPrice } from "@/lib/format";
+import bcrypt from "bcryptjs";
+import { randomBytes } from "node:crypto";
+import { createAuthToken } from "@/lib/tokens";
 
 // Endpoint público: lo usan los compradores de las tiendas. El total se
 // calcula SIEMPRE con los precios de la base de datos (productos + envío
@@ -48,6 +52,7 @@ export async function POST(req: Request) {
     fulfillment,
     deliveryAddress,
     paymentMethod,
+    createAccount,
     items,
   } = result.data;
 
@@ -215,6 +220,46 @@ export async function POST(req: Request) {
       }),
     ]);
   })().catch((err) => console.error("[orders] emails fallaron:", err));
+
+  // Crear cuenta de cliente si lo pidió en el checkout: usuario con rol
+  // customer + magic link para fijar contraseña. Fire-and-forget: no afecta al
+  // pedido ni al cobro. Si ya existe una cuenta con ese email, no hace nada.
+  if (createAccount) {
+    void (async () => {
+      const [existing] = await db
+        .select({ id: users.id })
+        .from(users)
+        .where(eq(users.email, customerEmail))
+        .limit(1);
+      if (existing) return;
+      const passwordHash = await bcrypt.hash(
+        randomBytes(16).toString("hex"),
+        12
+      );
+      const [created] = await db
+        .insert(users)
+        .values({
+          name: customerName,
+          email: customerEmail,
+          passwordHash,
+          phone: customerPhone,
+          address:
+            fulfillment === "delivery" ? (deliveryAddress ?? null) : null,
+          role: "customer",
+          emailVerified: new Date(),
+        })
+        .returning({ id: users.id });
+      const token = await createAuthToken(
+        created.id,
+        "password_reset",
+        7 * 24 * 3600_000
+      );
+      const url = `${process.env.APP_URL}/reset-password?token=${token}`;
+      await sendPasswordResetEmail(customerEmail, url);
+    })().catch((err) =>
+      console.error("[orders] crear cuenta de cliente falló:", err)
+    );
+  }
 
   // Cobro online. Si la tienda tiene Mercado Pago conectado (Colombia, con
   // PSE) se usa su Checkout Pro; si no, Stripe Connect (legado). En ambos,

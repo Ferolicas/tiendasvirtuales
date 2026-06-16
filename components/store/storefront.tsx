@@ -829,6 +829,7 @@ function CartDrawer({
     "delivery"
   );
   const [payment, setPayment] = useState<"card" | "in_store">("card");
+  const [createAccount, setCreateAccount] = useState(false);
   const [done, setDone] = useState<{
     orderNumber: number;
     trackUrl: string;
@@ -867,6 +868,7 @@ function CartDrawer({
         deliveryAddress:
           fulfillment === "delivery" ? form.get("address") : undefined,
         paymentMethod: payment,
+        createAccount,
         items: lines.map((l) => ({
           productId: l.product.id,
           quantity: l.quantity,
@@ -889,7 +891,7 @@ function CartDrawer({
     // también si nos vamos a Stripe y volvemos.
     onOrderPlaced(data.order.id);
     if (data.checkoutUrl) {
-      window.location.href = data.checkoutUrl;
+      window.location.assign(data.checkoutUrl);
       return;
     }
     setDone({
@@ -1065,6 +1067,23 @@ function CartDrawer({
                     </button>
                   </div>
                 </div>
+
+                <label className="flex cursor-pointer items-center gap-3 rounded-2xl bg-secondary/60 px-4 py-3 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={createAccount}
+                    onChange={(e) => setCreateAccount(e.target.checked)}
+                    className="size-4 shrink-0 accent-primary"
+                  />
+                  <span className="grid">
+                    <span className="font-medium">
+                      {t("createAccountLabel")}
+                    </span>
+                    <span className="text-xs font-light text-muted-foreground">
+                      {t("createAccountHint")}
+                    </span>
+                  </span>
+                </label>
 
                 <div className="flex items-center justify-between rounded-2xl bg-secondary/60 px-4 py-3 text-sm font-bold">
                   <span>{t("total")}</span>

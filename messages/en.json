@@ -505,6 +505,8 @@
     "backToCart": "Back to cart",
     "yourDetails": "Your details",
     "payNote": "If the store has payments enabled, you'll go to Mercado Pago's secure gateway.",
+    "createAccountLabel": "Create my account",
+    "createAccountHint": "We'll email you a link to set your password, save your details and track orders.",
     "orderConfirmedTitle": "Order confirmed!",
     "orderRef": "Reference",
     "orderConfirmedText": "The store received your order instantly and will contact you at {email}.",

@@ -505,6 +505,8 @@
     "backToCart": "Volver al carrito",
     "yourDetails": "Tus datos",
     "payNote": "Si la tienda tiene cobros activos, irás a la pasarela segura de Mercado Pago.",
+    "createAccountLabel": "Crear mi cuenta",
+    "createAccountHint": "Te enviamos un enlace para poner tu contraseña, guardar tus datos y seguir tus pedidos.",
     "orderConfirmedTitle": "¡Pedido confirmado!",
     "orderRef": "Referencia",
     "orderConfirmedText": "La tienda recibió tu pedido al instante y se pondrá en contacto contigo en {email}.",
