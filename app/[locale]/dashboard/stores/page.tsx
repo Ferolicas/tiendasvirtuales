@@ -46,7 +46,7 @@ export default async function StoresPage() {
           name: store.name,
           slug: store.slug,
           storeCategory: store.storeCategory,
-          chargesEnabled: store.chargesEnabled,
+          mpConnected: store.mpConnected,
           description: store.description,
           logoUrl: store.logoUrl,
           bannerUrl: store.bannerUrl,
@@ -63,7 +63,6 @@ export default async function StoresPage() {
           pickupEnabled: store.pickupEnabled,
           legalName: store.legalName,
           legalTaxId: store.legalTaxId,
-          stripeAccountId: store.stripeAccountId,
         }))}
         profile={{
           email: me?.email ?? "",

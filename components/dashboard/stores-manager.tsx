@@ -115,7 +115,7 @@ export interface ManagedStore {
   name: string;
   slug: string;
   storeCategory: string | null;
-  chargesEnabled: boolean;
+  mpConnected: boolean;
   description: string | null;
   logoUrl: string | null;
   bannerUrl: string | null;
@@ -132,7 +132,6 @@ export interface ManagedStore {
   pickupEnabled: boolean;
   legalName: string | null;
   legalTaxId: string | null;
-  stripeAccountId: string | null;
 }
 
 export function StoresManager({
@@ -148,17 +147,19 @@ export function StoresManager({
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Al volver del onboarding de Stripe: verificar contra Stripe si la
-  // cuenta quedó habilitada DE VERDAD (charges_enabled).
+  // Al volver del onboarding de Mercado Pago: confirmar el estado real y
+  // refrescar para que la tarjeta muestre "pagos activos".
   useEffect(() => {
-    if (searchParams.get("connect") !== "done") return;
-    const pending = stores.filter(
-      (s) => s.stripeAccountId && !s.chargesEnabled
-    );
+    if (searchParams.get("mp") === "error") {
+      toast.error(t("connectErrorToast"));
+      return;
+    }
+    if (searchParams.get("mp") !== "done") return;
+    const pending = stores.filter((s) => !s.mpConnected);
     if (pending.length === 0) return;
     void Promise.all(
       pending.map((s) =>
-        fetch(`/api/stores/${s.id}/connect`).then((r) =>
+        fetch(`/api/stores/${s.id}/mp-connect`).then((r) =>
           r.ok ? r.json() : null
         )
       )
@@ -387,13 +388,13 @@ export function StoresManager({
 
   async function onConnect(store: ManagedStore) {
     setConnecting(store.id);
-    const res = await fetch(`/api/stores/${store.id}/connect`, {
+    const res = await fetch(`/api/stores/${store.id}/mp-connect`, {
       method: "POST",
     });
     if (res.ok) {
       const data = await res.json();
       if (data.url) {
-        window.location.href = data.url;
+        window.location.assign(data.url);
         return;
       }
     }
@@ -449,7 +450,7 @@ export function StoresManager({
                     /s/{store.slug}
                   </Link>
                 </div>
-                {store.chargesEnabled ? (
+                {store.mpConnected ? (
                   <Badge
                     variant="secondary"
                     className="ml-auto gap-1 rounded-full"
@@ -457,19 +458,12 @@ export function StoresManager({
                     <VendiLiveDot />
                     <CreditCard className="size-3" />
                   </Badge>
-                ) : store.stripeAccountId ? (
-                  <Badge
-                    variant="secondary"
-                    className="ml-auto rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300"
-                  >
-                    {t("connectPendingStripe")}
-                  </Badge>
                 ) : null}
               </div>
 
               {/* Las 3 acciones canónicas de la tarjeta */}
               <div className="flex flex-wrap gap-2">
-                {!store.chargesEnabled ? (
+                {!store.mpConnected ? (
                   <Button
                     size="sm"
                     onClick={() => onConnect(store)}
@@ -481,9 +475,7 @@ export function StoresManager({
                     ) : (
                       <CreditCard className="size-3.5" />
                     )}
-                    {store.stripeAccountId
-                      ? t("connectContinue")
-                      : t("connectButton")}
+                    {t("connectButton")}
                   </Button>
                 ) : null}
                 <Button
