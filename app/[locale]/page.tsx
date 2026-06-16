@@ -13,8 +13,8 @@ import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { LocaleSwitcher } from "@/components/shared/locale-switcher";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
+import { InstallAppButton } from "@/components/shared/install-app-button";
 import { Reveal } from "@/components/shared/reveal";
 import { VendiDot } from "@/components/shared/vendi-dot";
 
@@ -57,14 +57,11 @@ export default async function HomePage() {
             vendi<span className="text-brand">.</span>
           </span>
           <nav className="flex items-center gap-1.5 sm:gap-3">
-            <Button
-              variant="ghost"
-              size="icon"
-              asChild
-              className="sm:hidden"
-            >
-              <Link href="/explorar" aria-label={t("exploreLink")}>
-                <Compass className="size-5" />
+            {/* Explorar tiendas: en móvil, icono + "Tiendas" */}
+            <Button variant="ghost" size="sm" asChild className="sm:hidden">
+              <Link href="/explorar">
+                <Compass className="size-4" />
+                {t("exploreShort")}
               </Link>
             </Button>
             <Button
@@ -75,8 +72,8 @@ export default async function HomePage() {
             >
               <Link href="/explorar">{t("exploreLink")}</Link>
             </Button>
-            <LocaleSwitcher />
             <ThemeToggle />
+            {/* Escritorio: iniciar sesión + crear tienda */}
             <Button
               variant="ghost"
               size="sm"
@@ -85,8 +82,16 @@ export default async function HomePage() {
             >
               <Link href="/login">{tc("login")}</Link>
             </Button>
-            <Button size="sm" asChild className="rounded-full px-4">
+            <Button
+              size="sm"
+              asChild
+              className="hidden rounded-full px-4 sm:inline-flex"
+            >
               <Link href="/register">{tc("register")}</Link>
+            </Button>
+            {/* Móvil: el botón destacado es iniciar sesión */}
+            <Button size="sm" asChild className="rounded-full px-4 sm:hidden">
+              <Link href="/login">{tc("login")}</Link>
             </Button>
           </nav>
         </div>
@@ -116,25 +121,28 @@ export default async function HomePage() {
             </p>
           </Reveal>
           <Reveal delay={0.24}>
-            <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Button
-                size="lg"
-                asChild
-                className="group h-12 w-full rounded-full px-7 text-base sm:w-auto"
-              >
-                <Link href="/register">
-                  {t("ctaPrimary")}
-                  <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
-                </Link>
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                asChild
-                className="h-12 w-full rounded-full px-7 text-base sm:w-auto"
-              >
-                <Link href="/login">{t("ctaSecondary")}</Link>
-              </Button>
+            <div className="mt-10 flex flex-col items-center justify-center gap-3">
+              <div className="flex w-full flex-col items-center justify-center gap-3 sm:w-auto sm:flex-row">
+                <Button
+                  size="lg"
+                  asChild
+                  className="group h-12 w-full rounded-full px-7 text-base sm:w-auto"
+                >
+                  <Link href="/register">
+                    {t("ctaSeller")}
+                    <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+                  </Link>
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  asChild
+                  className="h-12 w-full rounded-full px-7 text-base sm:w-auto"
+                >
+                  <Link href="/explorar">{t("ctaCustomer")}</Link>
+                </Button>
+              </div>
+              <InstallAppButton label={t("installApp")} />
             </div>
           </Reveal>
           <Reveal delay={0.32}>

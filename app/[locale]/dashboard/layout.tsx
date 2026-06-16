@@ -3,7 +3,6 @@ import { getTranslations } from "next-intl/server";
 import { auth, signOut } from "@/auth";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
-import { LocaleSwitcher } from "@/components/shared/locale-switcher";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { MasterTabs } from "@/components/dashboard/master-tabs";
 
@@ -25,7 +24,6 @@ export default async function DashboardLayout({
             vendi<span className="text-brand">.</span>
           </Link>
           <div className="flex items-center gap-3">
-            <LocaleSwitcher />
             <ThemeToggle />
             <span className="hidden text-sm text-muted-foreground sm:inline">
               {session.user.email}

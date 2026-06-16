@@ -4,7 +4,6 @@ import { Link } from "@/i18n/navigation";
 import { db } from "@/lib/db";
 import { orders, products, reviews, stores } from "@/lib/db/schema";
 import { Button } from "@/components/ui/button";
-import { LocaleSwitcher } from "@/components/shared/locale-switcher";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { VendiDot } from "@/components/shared/vendi-dot";
 import { ExploreGrid } from "@/components/store/explore-grid";
@@ -182,7 +181,6 @@ export default async function ExplorePage() {
             vendi<span className="text-brand">.</span>
           </Link>
           <nav className="flex items-center gap-1.5 sm:gap-3">
-            <LocaleSwitcher />
             <ThemeToggle />
             <Button size="sm" asChild className="rounded-full px-4">
               <Link href="/register">{tc("register")}</Link>

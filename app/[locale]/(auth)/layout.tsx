@@ -1,5 +1,4 @@
 import { Link } from "@/i18n/navigation";
-import { LocaleSwitcher } from "@/components/shared/locale-switcher";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 
 export default function AuthLayout({
@@ -13,7 +12,6 @@ export default function AuthLayout({
             vendi<span className="text-brand">.</span>
           </Link>
           <div className="flex items-center gap-1.5">
-            <LocaleSwitcher />
             <ThemeToggle />
           </div>
         </div>
